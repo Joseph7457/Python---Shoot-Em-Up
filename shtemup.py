@@ -1,26 +1,25 @@
 import pygame
 
 #taille écran
-FENETRE_LARGEUR = 1600
-FENETRE_HAUTEUR = 900
+FENETRE_LARGEUR = 1600; FENETRE_HAUTEUR = 900
+
 #valeur couleur
-NOIR  = (  0, 0, 0)
-BLANC = (  255, 255, 255)
+NOIR  = (  0, 0, 0); BLANC = (  255, 255, 255)
+
 #booleans
-fini   = False; gauche = False
-droite = False
-tir    = False
+fini   = False; 
+gauche = False; droite = False; tir = False
+
 #Ship
-SHIP_TAILLE  = 40
-SHIP_VITESSE = 1
+SHIP_TAILLE  = 40; SHIP_VITESSE = 1
 ship_position = [FENETRE_LARGEUR//2, FENETRE_HAUTEUR-100]
+
 #Tirs
-TIR_VITESSE   = -1
-TIR_TAILLE    = 3
+TIR_VITESSE   = -1; TIR_TAILLE    = 3
 tir_positions = []
+
 #Cooldowns
-cooldown_tir     = 0
-cooldown_max_tir = 60
+cooldown_tir = 0; cooldown_max_tir = 60
 
 
 pygame.init()
@@ -30,6 +29,15 @@ fenetre.fill(NOIR)
 
 #Definition fonctions
 
+#Tirs joueurs
+
+def tirer():
+    global cooldown_tir
+    if((tir == True) and (cooldown_tir <= 0)):
+
+       cooldown_tir = cooldown_max_tir
+       tp = [ship_position[0], ship_position[1]]
+       tir_positions.append(tp)
 def afficher_tir():
     for i in range(len(tir_positions)):
         pygame.draw.circle(fenetre, BLANC, tir_positions[i], TIR_TAILLE)
@@ -40,19 +48,13 @@ def deplacer_tir():
     for i in range(len(tir_positions)):
         tir_positions[i][1] += TIR_VITESSE
 
-def tirer():
-    global cooldown_tir
-    if((tir == True) and (cooldown_tir <= 0)):
-
-       cooldown_tir = cooldown_max_tir
-       tp = [ship_position[0], ship_position[1]]
-       tir_positions.append(tp)
-       
-
-       
+#deplacement       
 
 def deplacer_joueur(vitesse):
-    ship_position[0] += (-int(gauche)+int(droite)) * vitesse
+       ship_position[0] += (-int(gauche)+int(droite)) * vitesse
+       
+def deplacer(position, vitesse): # both must be list
+       return [position[0]+vitesse[0], position[1]+vitesse[1]]
 
 
 while not fini:
@@ -83,12 +85,15 @@ while not fini:
     #effacer
     pygame.draw.circle(fenetre, NOIR, ship_position, SHIP_TAILLE)
     effacer_tir()
-    #actions    
+    
+    #actions
+        
     deplacer_joueur(SHIP_VITESSE)
     deplacer_tir()
     tirer()
     cooldown_tir -= 1
     print(cooldown_tir)
+    
     #dessiner
     pygame.draw.circle(fenetre, BLANC, ship_position, SHIP_TAILLE)
     afficher_tir()
