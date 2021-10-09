@@ -33,10 +33,10 @@ fenetre.fill(NOIR)
 
 #--- Définition entite
 
-def creer_entite():
+def creer_entite(x=0, y=0, vx=0, vy=0):
     return {
-        'position': [0, 0],
-        'vitesse': [0, 0]
+        'position': [x, y],
+        'vitesse': [vx, vy]
     }
 
 def position(entite):
@@ -114,8 +114,7 @@ def deplacer(entite):
 
 temps = pygame.time.Clock()
 
-joueur = creer_entite()
-modifier_position(joueur, (ship_position[0], ship_position[1]))
+joueur = creer_entite( ship_position[0], ship_position[1])
 
 while not fini:
 
@@ -158,10 +157,6 @@ while not fini:
     pygame.display.flip()
 
     temps.tick(60)
-
-    print(len(tirs))
-
-
 
 pygame.display.quit()
 pygame.quit()
