@@ -18,6 +18,10 @@ ship_position = [FENETRE_LARGEUR//2, FENETRE_HAUTEUR-100]
 TIR_VITESSE   = -1; TIR_TAILLE    = 3
 tirs = []
 
+#Ennemis 
+TAILLE_ENNEMI = 40
+ennemis = []
+
 #Cooldowns
 cooldown_tir = 200 # Millisecondes entre chaque tir
 temps_dernier_tir = 0
@@ -110,11 +114,22 @@ def translation(entite, mouvement):
 def deplacer(entite):
     translation(entite, deplacement_2d(vitesse(entite)) )
 
+#ennemis
+
+def creer_ennemi(x, y):
+    ennemis.append( creer_entite( x, y) )
+
+def afficher_ennemis():
+    for i in range(len(ennemis)):
+        pygame.draw.circle(fenetre, BLANC, position(ennemis[i]), TAILLE_ENNEMI)
+
 # ----- Fin définitions fonctions
 
 temps = pygame.time.Clock()
 
 joueur = creer_entite( ship_position[0], ship_position[1])
+
+creer_ennemi( ship_position[0], 100 )
 
 while not fini:
 
@@ -152,6 +167,7 @@ while not fini:
     tirer()
     
     #dessiner
+    afficher_ennemis()
     pygame.draw.circle(fenetre, BLANC, position(joueur), SHIP_TAILLE)
     afficher_tir()
     pygame.display.flip()
