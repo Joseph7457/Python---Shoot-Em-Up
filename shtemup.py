@@ -37,10 +37,11 @@ fenetre.fill(NOIR)
 
 #--- Définition entite
 
-def creer_entite(x=0, y=0, vx=0, vy=0):
+def creer_entite(largeur, hauteur, x=0, y=0, vx=0, vy=0):
     return {
         'position': [x, y],
-        'vitesse': [vx, vy]
+        'vitesse': [vx, vy],
+        'taille': [largeur, hauteur]
     }
 
 def position(entite):
@@ -48,6 +49,9 @@ def position(entite):
 
 def vitesse(entite):
     return entite['vitesse']
+
+def taille(entite):
+    return entite['taille']
 
 def modifier_vitesse(entite, vecteur):
     entite['vitesse'][X] = vecteur[X]
@@ -59,6 +63,39 @@ def modifier_position(entite, coordonnees):
 
 #Definition fonctions
 
+#--- Collisions
+
+# Return True si collision entre les deux entites, False sinon
+def collision_entite(entite1, entite2):
+    rect1 = pygame.Rect(position(entite1), taille(entite1))
+    rect2 = pygame.Rect(position(entite2), taille(entite2))
+    return pygame.Rect.colliderect(rect1, rect2)
+
+def collision_tirs_joueurs_ennemis():
+    index_tirs_a_supprimer = []
+    index_ennemis_a_supprimer = []
+
+    for i in range(len(tirs)):
+        for j in range(len(ennemis)):
+            if collision_entite(tirs[i], ennemis[j]):
+                index_tirs_a_supprimer.append(i)
+                index_ennemis_a_supprimer.append(j)
+                break # Si une collision est détectée, on ne considère plus les autres collisions éventuelles du tir actuel
+
+    # Suppression des tirs et ennemis qui ont générés des collisions
+
+    for i in range(len(index_tirs_a_supprimer)):
+        detruire_tir(index_tirs_a_supprimer[i] - i) #index_tirs_a_supprimer[i] >= i car index_tirs_a_supprimer est en ordre croissant
+
+    for i in range(len(index_ennemis_a_supprimer)):
+        detruire_ennemi(index_ennemis_a_supprimer[i] - i) #index_ennemis_a_supprimer[i] >= i car index_ennemis_a_supprimer est en ordre croissant
+
+#--- Joueur
+
+def afficher_joueur():
+    pygame.draw.circle(fenetre, BLANC, (position(joueur)[X] + taille(joueur)[X]//2, position(joueur)[Y] + taille(joueur)[Y]//2), SHIP_TAILLE)
+
+
 #Tirs joueurs
 
 def tirer():
@@ -69,8 +106,8 @@ def tirer():
 
         position_joueur = position(joueur)
 
-        nouveau_tir = creer_entite()
-        modifier_position(nouveau_tir, position_joueur)
+        nouveau_tir = creer_entite(TIR_TAILLE*2, TIR_TAILLE*2)
+        modifier_position(nouveau_tir, (position_joueur[X] + taille(joueur)[X]//2, position_joueur[Y] + taille(joueur)[Y]//2))
         modifier_vitesse(nouveau_tir, (0, TIR_VITESSE))
         tirs.append(nouveau_tir)
 
@@ -86,14 +123,18 @@ def deplacer_tir():
     for i in range(len(tirs)):
         deplacer(tirs[i])
 
-def detruire_tir():
+def detruire_tir_hors_ecran():
     index_tirs_a_supprimer = []
     for i in range(len(tirs)):
         if position(tirs[i])[Y] < 0:
             index_tirs_a_supprimer.append(i)
     
     for i in range(len(index_tirs_a_supprimer)):
-        del tirs[index_tirs_a_supprimer[i]]
+        detruire_tir(index_tirs_a_supprimer[i] - i)
+
+def detruire_tir(index):
+    tirs.pop(index)
+
 
 #deplacement       
 
@@ -116,20 +157,26 @@ def deplacer(entite):
 
 #ennemis
 
-def creer_ennemi(x, y):
-    ennemis.append( creer_entite( x, y) )
+def creer_ennemi(largeur, hauteur, x, y):
+    ennemis.append( creer_entite(largeur, hauteur, x, y) )
 
 def afficher_ennemis():
     for i in range(len(ennemis)):
-        pygame.draw.circle(fenetre, BLANC, position(ennemis[i]), TAILLE_ENNEMI)
+        pygame.draw.circle(fenetre, BLANC, (position(ennemis[i])[X] + taille(ennemis[i])[X]//2, position(ennemis[i])[Y] + taille(ennemis[i])[Y]//2), TAILLE_ENNEMI)
+
+def detruire_ennemi(index):
+    ennemis.pop(index)
+
+
 
 # ----- Fin définitions fonctions
 
 temps = pygame.time.Clock()
 
-joueur = creer_entite( ship_position[0], ship_position[1])
+joueur = creer_entite(SHIP_TAILLE*2, SHIP_TAILLE*2, ship_position[0], ship_position[1])
 
-creer_ennemi( ship_position[0], 100 )
+for i in range(1, 8):
+    creer_ennemi(TAILLE_ENNEMI*2, TAILLE_ENNEMI*2, 200*i, 100 )
 
 while not fini:
 
@@ -156,19 +203,20 @@ while not fini:
     modifier_vitesse(joueur, (SHIP_VITESSE * -int(gauche)+int(droite), 0) )
 
     #effacer
-    pygame.draw.circle(fenetre, NOIR, position(joueur), SHIP_TAILLE)
-    effacer_tir()
+    fenetre.fill(NOIR)
     
     #actions
         
     deplacer(joueur)
     deplacer_tir()
-    detruire_tir()
+    detruire_tir_hors_ecran()
     tirer()
+
+    collision_tirs_joueurs_ennemis()
     
     #dessiner
     afficher_ennemis()
-    pygame.draw.circle(fenetre, BLANC, position(joueur), SHIP_TAILLE)
+    afficher_joueur()
     afficher_tir()
     pygame.display.flip()
 
