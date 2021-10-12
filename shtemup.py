@@ -1,223 +1,216 @@
 import pygame
 
-#taille écran
-FENETRE_LARGEUR = 1600; FENETRE_HAUTEUR = 900
+# --- To make code more readable
+X = 0; Y = 1
 
-#valeur couleur
-NOIR  = (  0, 0, 0); BLANC = (  255, 255, 255)
+# window size
+WINDOW_SIZE = [1600, 900]
 
-#booleans
-fini   = False; 
-gauche = False; droite = False; tir = False
+# definition of colors
+BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
 
-#Ship
-SHIP_TAILLE  = 40; SHIP_VITESSE = 1
-ship_position = [FENETRE_LARGEUR//2, FENETRE_HAUTEUR-100]
+# booleans
+finished   = False; 
+left = False; right = False; shooting = False
 
-#Tirs
-TIR_VITESSE   = -1; TIR_TAILLE    = 3
-tirs = []
+# Ship
+SHIP_SIZE  = 40; SHIP_SPEED = 10
+SHIP_OFFSET = 100
+SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-SHIP_OFFSET]
 
-#Ennemis 
-TAILLE_ENNEMI = 40
-ennemis = []
+#Projectiles
+PROJECTILE_SPEED   = 20
+PROJECTILE_SIZE    = 3
+projectiles = []
+
+#Ennemies
+ENNEMY_SIZE = 40
+ennemies = []
 
 #Cooldowns
-cooldown_tir = 200 # Millisecondes entre chaque tir
-temps_dernier_tir = 0
-
-# --- Pour que ce soit plus lisible
-X = 0; Y = 1
+COOLDOWN_SHOOT = 200 # Milliseconds between each fire
+TIME_LAST_SHOT = 0
 
 
 pygame.init()
-fenetre_taille = (FENETRE_LARGEUR, FENETRE_HAUTEUR)
-fenetre = pygame.display.set_mode(fenetre_taille)
-fenetre.fill(NOIR)
+window = pygame.display.set_mode(WINDOW_SIZE)
+window.fill(BLACK)
 
-#--- Définition entite
+#--- Definition entity
 
-def creer_entite(largeur, hauteur, x=0, y=0, vx=0, vy=0):
+def createEntity(width, height, x=0, y=0, vx=0, vy=0):
     return {
         'position': [x, y],
-        'vitesse': [vx, vy],
-        'taille': [largeur, hauteur]
+        'direction': [0,0], # normalized
+        'speed': 0,
+        'size': [width, height],
+        'controller' : None # ref to function controlling direction and speed of entity
     }
 
-def position(entite):
-    return entite['position']
+def getPos(entity):
+    return entity['position']
 
-def vitesse(entite):
-    return entite['vitesse']
+def getDirection(entity):
+    return entity['direction']
 
-def taille(entite):
-    return entite['taille']
+def getSpeed(entity):
+    return entity['speed']
 
-def modifier_vitesse(entite, vecteur):
-    entite['vitesse'][X] = vecteur[X]
-    entite['vitesse'][Y] = vecteur[Y]
+def getSize(entity):
+    return entity['size']
 
-def modifier_position(entite, coordonnees):
-    entite['position'][X] = coordonnees[X]
-    entite['position'][Y] = coordonnees[Y]
+def setSpeed(entity, vecteur):
+    entity['speed'] = vecteur
 
-#Definition fonctions
+def setDirection(entity, x, y):
+    entity['direction'][X] = x
+    entity['direction'][Y] = y
+
+def setPosition(entity, coords):
+    entity['position'][X] = coords[X]
+    entity['position'][Y] = coords[Y]
+
+def setSize(entity, x, y):
+    entity['size'][X] = x
+    entity['size'][Y] = y
+
+#Definition functions
 
 #--- Collisions
 
-# Return True si collision entre les deux entites, False sinon
+# Return True if collision occurs, False otherway
 def collision_entite(entite1, entite2):
-    rect1 = pygame.Rect(position(entite1), taille(entite1))
-    rect2 = pygame.Rect(position(entite2), taille(entite2))
+    rect1 = pygame.Rect(getPos(entite1), getSize(entite1))
+    rect2 = pygame.Rect(getPos(entite2), getSize(entite2))
     return pygame.Rect.colliderect(rect1, rect2)
 
-def collision_tirs_joueurs_ennemis():
-    index_tirs_a_supprimer = []
-    index_ennemis_a_supprimer = []
+def collisionProjectilePlayersEnnemies():
+    indexProjectileToDestroy = []
+    indexEnnemiesToDestroy = []
 
-    for i in range(len(tirs)):
-        for j in range(len(ennemis)):
-            if collision_entite(tirs[i], ennemis[j]):
-                index_tirs_a_supprimer.append(i)
-                index_ennemis_a_supprimer.append(j)
-                break # Si une collision est détectée, on ne considère plus les autres collisions éventuelles du tir actuel
+    for i in range(len(projectiles)):
+        hasCollided = False
+        j = 0
+        while((j < len(ennemies)) and (not hasCollided)): # stop the search if the projectile has already collided
+            if collision_entite(projectiles[i], ennemies[j]):
+                indexProjectileToDestroy.append(i)
+                indexEnnemiesToDestroy.append(j)
+                hasCollided = True
+            j = j + 1
 
-    # Suppression des tirs et ennemis qui ont générés des collisions
+    # Removing projectiles and ennemies that has collided
 
-    for i in range(len(index_tirs_a_supprimer)):
-        detruire_tir(index_tirs_a_supprimer[i] - i) #index_tirs_a_supprimer[i] >= i car index_tirs_a_supprimer est en ordre croissant
+    for i in range(len(indexProjectileToDestroy)):
+        projectiles.pop(indexProjectileToDestroy[i] - i) #indexProjectileToDestroy[i] >= i because indexProjectileToDestroy is in increasing order
 
-    for i in range(len(index_ennemis_a_supprimer)):
-        detruire_ennemi(index_ennemis_a_supprimer[i] - i) #index_ennemis_a_supprimer[i] >= i car index_ennemis_a_supprimer est en ordre croissant
+    for i in range(len(indexEnnemiesToDestroy)):
+        destroyEnemy(indexEnnemiesToDestroy[i] - i) #indexEnnemiesToDestroy[i] >= i because indexEnnemiesToDestroy is in increasing order
 
-#--- Joueur
+#--- Player
 
-def afficher_joueur():
-    pygame.draw.circle(fenetre, BLANC, (position(joueur)[X] + taille(joueur)[X]//2, position(joueur)[Y] + taille(joueur)[Y]//2), SHIP_TAILLE)
+def displayPlayer():
+    pygame.draw.circle(window, WHITE, (getPos(player)[X] + getSize(player)[X]//2, getPos(player)[Y] + getSize(player)[Y]//2), SHIP_SIZE)
 
 
-#Tirs joueurs
+# Player's projectiles
 
-def tirer():
-    global cooldown_tir, temps_dernier_tir
-    if((tir == True) and (pygame.time.get_ticks() - temps_dernier_tir >= cooldown_tir)):
+def shoot():
+    global COOLDOWN_SHOOT, TIME_LAST_SHOT
+    if((shooting == True) and (pygame.time.get_ticks() - TIME_LAST_SHOT >= COOLDOWN_SHOOT)):
 
-        temps_dernier_tir = pygame.time.get_ticks()
+        TIME_LAST_SHOT = pygame.time.get_ticks()
 
-        position_joueur = position(joueur)
+        playerPos = getPos(player)
 
-        nouveau_tir = creer_entite(TIR_TAILLE*2, TIR_TAILLE*2)
-        modifier_position(nouveau_tir, (position_joueur[X] + taille(joueur)[X]//2, position_joueur[Y] + taille(joueur)[Y]//2))
-        modifier_vitesse(nouveau_tir, (0, TIR_VITESSE))
-        tirs.append(nouveau_tir)
+        newProjectile = createEntity(PROJECTILE_SIZE*2, PROJECTILE_SIZE*2)
+        setPosition(newProjectile, (playerPos[X] + getSize(player)[X]//2, playerPos[Y] + getSize(player)[Y]//2))
+        setSpeed(newProjectile, PROJECTILE_SPEED)
+        setDirection(newProjectile, 0, -1)
+        projectiles.append(newProjectile)
 
-def afficher_tir():
-    for i in range(len(tirs)):
-        pygame.draw.circle(fenetre, BLANC, position(tirs[i]), TIR_TAILLE)
-
-def effacer_tir():
-    for i in range(len(tirs)):
-        pygame.draw.circle(fenetre, NOIR, position(tirs[i]), TIR_TAILLE)
+def displayProjectile():
+    for i in range(len(projectiles)):
+        pygame.draw.circle(window, WHITE, getPos(projectiles[i]), PROJECTILE_SIZE)
 
 def deplacer_tir():
-    for i in range(len(tirs)):
-        deplacer(tirs[i])
+    for projectile in projectiles:
+        move(projectile)
 
-def detruire_tir_hors_ecran():
-    index_tirs_a_supprimer = []
-    for i in range(len(tirs)):
-        if position(tirs[i])[Y] < 0:
-            index_tirs_a_supprimer.append(i)
-    
-    for i in range(len(index_tirs_a_supprimer)):
-        detruire_tir(index_tirs_a_supprimer[i] - i)
+def destroyProjOutBound():
+    for projectile in range(len(projectiles)-1):
+        if getPos(projectiles[projectile])[Y] < 0:
+            projectiles.pop(projectile)
 
-def detruire_tir(index):
-    tirs.pop(index)
+# movement
 
+def move(entity):
+    entity['position'][X] += entity['direction'][X] * entity['speed']
+    entity['position'][Y] += entity['direction'][Y] * entity['speed']
 
-#deplacement       
+# ennemies
 
-# --- Retourne la distance parcourue sur une dimension pendant un tour de boucle
-def deplacement_1d(vitesse):
-    return vitesse * temps.get_time()
+def createEnemy(width, height, x, y):
+    ennemies.append( createEntity(width, height, x, y) )
 
-# --- Retourne une liste contenant la distance parcourue pour chaque dimension
-def deplacement_2d(vitesse): #must be list
-       return [deplacement_1d(vitesse[X]), deplacement_1d(vitesse[Y])]
+def displayEnnemy():
+    for ennemy in ennemies:
+        pygame.draw.circle(window, WHITE, (getPos(ennemy)[X] + getSize(ennemy)[X]//2, getPos(ennemy)[Y] + getSize(ennemy)[Y]//2), ENNEMY_SIZE)
 
-# --- Fonctions de deplacement utilisant les entites
-
-def translation(entite, mouvement):
-    entite['position'][X] += mouvement[X]
-    entite['position'][Y] += mouvement[Y]
-
-def deplacer(entite):
-    translation(entite, deplacement_2d(vitesse(entite)) )
-
-#ennemis
-
-def creer_ennemi(largeur, hauteur, x, y):
-    ennemis.append( creer_entite(largeur, hauteur, x, y) )
-
-def afficher_ennemis():
-    for i in range(len(ennemis)):
-        pygame.draw.circle(fenetre, BLANC, (position(ennemis[i])[X] + taille(ennemis[i])[X]//2, position(ennemis[i])[Y] + taille(ennemis[i])[Y]//2), TAILLE_ENNEMI)
-
-def detruire_ennemi(index):
-    ennemis.pop(index)
+def destroyEnemy(index):
+    ennemies.pop(index)
 
 
 
-# ----- Fin définitions fonctions
+# ----- End function definition
 
 temps = pygame.time.Clock()
 
-joueur = creer_entite(SHIP_TAILLE*2, SHIP_TAILLE*2, ship_position[0], ship_position[1])
+player = createEntity(SHIP_SIZE*2, SHIP_SIZE*2, SHIP_START_POS[0], SHIP_START_POS[1])
+setSpeed(player, SHIP_SPEED)
 
 for i in range(1, 8):
-    creer_ennemi(TAILLE_ENNEMI*2, TAILLE_ENNEMI*2, 200*i, 100 )
+    createEnemy(ENNEMY_SIZE*2, ENNEMY_SIZE*2, 200*i, 100 )
 
-while not fini:
+while not finished:
 
     for evenement in pygame.event.get():
         if evenement.type == pygame.QUIT:
-               fini = True
+               finished = True
 
         if evenement.type    == pygame.KEYDOWN :
             if evenement.key == pygame.K_LEFT :
-               gauche = True
+               left = True
             if evenement.key == pygame.K_RIGHT :
-               droite = True
+               right = True
             if evenement.key == pygame.K_SPACE :
-               tir = True
+               shooting = True
 
         if evenement.type == pygame.KEYUP :
             if evenement.key == pygame.K_LEFT :
-               gauche = False
+               left = False
             if evenement.key == pygame.K_RIGHT :
-               droite = False
+               right = False
             if evenement.key == pygame.K_SPACE :
-               tir = False
+               shooting = False
 
-    modifier_vitesse(joueur, (SHIP_VITESSE * -int(gauche)+int(droite), 0) )
+    setDirection(player, (-int(left)+int(right)), 0)
 
-    #effacer
-    fenetre.fill(NOIR)
+    # erase
+    window.fill(BLACK)
     
-    #actions
+    # actions
         
-    deplacer(joueur)
+    move(player)
     deplacer_tir()
-    detruire_tir_hors_ecran()
-    tirer()
+    destroyProjOutBound()
+    shoot()
 
-    collision_tirs_joueurs_ennemis()
+    collisionProjectilePlayersEnnemies()
     
-    #dessiner
-    afficher_ennemis()
-    afficher_joueur()
-    afficher_tir()
+    # display
+    displayEnnemy()
+    displayPlayer()
+    displayProjectile()
     pygame.display.flip()
 
     temps.tick(60)
