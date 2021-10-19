@@ -11,6 +11,7 @@ BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
 
 # booleans
 finished   = False; 
+playing = False
 left = False; right = False; shooting = False
 
 # Ship
@@ -224,8 +225,11 @@ def control():
 # Score
 
 def displayScore():
-    message = font.render("Score: " + str(score), True, WHITE)
-    window.blit(message, (0, 0))
+    displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
+
+def displayMessage(font, string, color, position):
+    message = font.render(string, True, color)
+    window.blit(message, position)
 
 # ----- End function definition
 
@@ -237,52 +241,67 @@ setSpeed(player, SHIP_SPEED)
 for i in range(1, 8):
     createEnemy(ENNEMY_SIZE*2, ENNEMY_SIZE*2, 200*i, 100 )
 
-font = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
+scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
+menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
 while not finished:
 
     for evenement in pygame.event.get():
         if evenement.type == pygame.QUIT:
-               finished = True
+            finished = True
 
-        if evenement.type    == pygame.KEYDOWN :
-            if evenement.key == pygame.K_LEFT :
-               left = True
-            if evenement.key == pygame.K_RIGHT :
-               right = True
-            if evenement.key == pygame.K_SPACE :
-               shooting = True
+        if evenement.type == pygame.KEYDOWN :
+            playing = True
 
-        if evenement.type == pygame.KEYUP :
-            if evenement.key == pygame.K_LEFT :
-               left = False
-            if evenement.key == pygame.K_RIGHT :
-               right = False
-            if evenement.key == pygame.K_SPACE :
-               shooting = False
-
-    setDirection(player, (-int(left)+int(right)), 0)
-
-    # erase
-    window.fill(BLACK)
-    
-    # actions
-    control()
-    move(player)
-    deplacer_tir()
-    destroyProjOutBound()
-    shoot()
-
-    collisionProjectilePlayersEnnemies()
-    
-    # display
-    displayEnnemy()
-    displayPlayer()
-    displayProjectile()
-    displayScore()
+    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
+    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
     pygame.display.flip()
 
-    temps.tick(60)
+    while playing:
+
+        for evenement in pygame.event.get():
+            if evenement.type == pygame.QUIT:
+                   finished = True
+                   playing = False
+
+            if evenement.type == pygame.KEYDOWN :
+                if evenement.key == pygame.K_LEFT :
+                   left = True
+                if evenement.key == pygame.K_RIGHT :
+                   right = True
+                if evenement.key == pygame.K_SPACE :
+                   shooting = True
+
+            if evenement.type == pygame.KEYUP :
+                if evenement.key == pygame.K_LEFT :
+                   left = False
+                if evenement.key == pygame.K_RIGHT :
+                   right = False
+                if evenement.key == pygame.K_SPACE :
+                   shooting = False
+
+        setDirection(player, (-int(left)+int(right)), 0)
+
+        # erase
+        window.fill(BLACK)
+        
+        # actions
+        control()
+        move(player)
+        deplacer_tir()
+        destroyProjOutBound()
+        shoot()
+
+        collisionProjectilePlayersEnnemies()
+        
+        # display
+        displayEnnemy()
+        displayPlayer()
+        displayProjectile()
+        displayScore()
+        pygame.display.flip()
+
+        temps.tick(60)
 
 pygame.display.quit()
 pygame.quit()
