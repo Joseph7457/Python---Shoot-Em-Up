@@ -31,12 +31,40 @@ ennemies = []
 COOLDOWN_SHOOT = 200 # Milliseconds between each fire
 TIME_LAST_SHOT = 0
 
+#Spawner
+spawner = []
+
+#spawnController
+spawnController = 0
+oldTime = 0
+deltaTime = 0
+  #Pour le futur
+
 
 pygame.init()
 window = pygame.display.set_mode(WINDOW_SIZE)
 window.fill(BLACK)
 
+
+
 #--- Definition entity
+
+def createSpawnController():
+    return{
+        'spawnIndex' : 0,
+        'waveIndex'  : 0,
+        'spawner' : [],
+        'ennemies': [],
+        'timeElapsed': 0
+    } 
+    
+
+def createSpawner(w, t):
+    return{
+        'type'   : w,
+        'timer'  : t
+    }
+
 
 def createEntity(width, height, x=0, y=0, vx=0, vy=0):
     return {
@@ -161,6 +189,33 @@ def destroyEnemy(index):
 
 
 
+#--- Control
+
+def control():
+    global spawnController, oldTime, deltaTime
+    if (spawnController == 0):
+        spawnController = createSpawnController()
+        print()
+        spawnController['spawner'].append(   createSpawner( (0   ,0   , 0  ,0   ,0  ,0   ,0   ,0    ,0   ,0   ,0) , 
+                                                            (200,200,400,400,300,300, 500, 500 ,500 ,500 ,500)  )  )
+    
+    if (len (spawnController['spawner']) > 0):
+    
+        if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']]):
+            createEnemy(50, 50, 50+100*spawnController['spawnIndex'], 300)
+            spawnController['timeElapsed'] = 0
+            spawnController['spawnIndex'] += 1
+    
+        if ( ( spawnController['spawnIndex'] >= len(spawnController['spawner'][0]['timer'])-1  ) ):
+            spawnController['spawner'].pop()
+            spawnController['spawnIndex'] = 0
+            
+    deltaTime = pygame.time.get_ticks()-oldTime
+    oldTime   = pygame.time.get_ticks()
+    spawnController['timeElapsed'] +=  deltaTime
+    
+    return
+
 # ----- End function definition
 
 temps = pygame.time.Clock()
@@ -199,7 +254,7 @@ while not finished:
     window.fill(BLACK)
     
     # actions
-        
+    control()
     move(player)
     deplacer_tir()
     destroyProjOutBound()
