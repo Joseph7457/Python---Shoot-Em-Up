@@ -12,7 +12,9 @@ REFRESH_RATE = 60
 BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
 
 # booleans
-finished   = False
+
+finished   = False; 
+playing = False
 
 # player 1 parameters
 PLAYER1_SHIP_SIZE  = 40
@@ -38,6 +40,7 @@ oldTime = 0
 deltaTime = 0
   #Pour le futur
 
+score = 0
 
 pygame.init()
 window = pygame.display.set_mode(WINDOW_SIZE)
@@ -49,9 +52,6 @@ def normalize2dVector(x, y):
         return (0,0)
     module = math.sqrt(x**2+y**2)
     return (x/module, y/module)
-
-
-
 
 
 def createSpawnController():
@@ -70,6 +70,7 @@ def createSpawner(w, t):
         'timer'  : t
     }
 
+  
 #--- DEFINITION ENTITY ---#
 
 def createEntity(width, height, x=0, y=0, speed = 0):
@@ -111,12 +112,12 @@ def setSize(entity, x, y):
     entity['size'][Y] = y
 
     #Method
-
 def move(entity):
     entity['position'][X] += entity['direction'][X] * entity['speed']
     entity['position'][Y] += entity['direction'][Y] * entity['speed']
 
 #--- END ENTITY ---#
+
 
 #--- SHIPS ---#
 
@@ -250,6 +251,11 @@ def getPlayerShip(Player):
     return Player['ship']
 
 
+# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
+def removeFromList(list, indexesToRemove):
+    for i in range(len(indexesToRemove)):
+        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
+
 #--- Collisions
 
 # Return True if collision occurs, False otherway
@@ -259,6 +265,7 @@ def collision_entite(entite1, entite2):
     return pygame.Rect.colliderect(rect1, rect2)
 
 def collisionProjectilePlayersEnnemies():
+    global score
     indexProjectileToDestroy = []
     indexEnemiesToDestroy = []
 
@@ -270,15 +277,13 @@ def collisionProjectilePlayersEnnemies():
                 indexProjectileToDestroy.append(i)
                 indexEnemiesToDestroy.append(j)
                 hasCollided = True
+                score += 1
             j = j + 1
 
     # Removing projectiles and enemies that has collided
-
-    for i in range(len(indexProjectileToDestroy)):
-        projectiles.pop(indexProjectileToDestroy[i] - i) #indexProjectileToDestroy[i] >= i because indexProjectileToDestroy is in increasing order
-
-    for i in range(len(indexEnemiesToDestroy)):
-        destroyEnemy(indexEnemiesToDestroy[i] - i) #indexEnnemiesToDestroy[i] >= i because indexEnnemiesToDestroy is in increasing order
+    removeFromList(projectiles, indexProjectileToDestroy) 
+    removeFromList(enemies, indexEnemiesToDestroy)
+    
 
 #--- PROJECTILE ---#
 def displayProjectile():
@@ -358,6 +363,21 @@ def inputManager(event):
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
 
+# Score
+
+def displayScore():
+    displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
+
+def displayMessage(font, string, color, position):
+    message = font.render(string, True, color)
+    window.blit(message, position)
+
+# Menu
+
+def displayMenu():
+    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
+    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
+
 
 # ----- End function definition
 
@@ -369,35 +389,55 @@ for i in range(1, 8):
                                     1, 0, -1, False)))
     
 
+scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
+menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
+
 while not finished:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
-        else:
-            inputManager(event)
 
-    # erase
-    window.fill(BLACK)
-    
-    # actions
-    control()
-    destroyProjOutBound()
+        if event.type == pygame.KEYDOWN :
+            playing = True
 
-    shipShoot(getPlayerShip(Player1))
-    movePlayer(Player1)
-
-    deplacer_tir()
-
-    collisionProjectilePlayersEnnemies()
-    
-    # display
-    displayEnemies()
-    displayShip(getPlayerShip(Player1), WHITE)
-    displayProjectile()
+    displayMenu()
     pygame.display.flip()
 
-    temps.tick(REFRESH_RATE)
+    while playing:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                   finished = True
+                   playing = False
+
+            else:
+              inputManager(event)
+
+
+        # erase
+        window.fill(BLACK)
+        
+        # actions
+        control()
+        deplacer_tir()
+        destroyProjOutBound()
+        
+        shipShoot(getPlayerShip(Player1))
+        movePlayer(Player1)
+
+        collisionProjectilePlayersEnnemies()
+        
+        # display
+        displayEnemies()
+        displayShip(getPlayerShip(Player1), WHITE)
+        displayProjectile()
+        displayScore()
+        pygame.display.flip()
+
+        temps.tick(60)
 
 pygame.display.quit()
 pygame.quit()
+
+

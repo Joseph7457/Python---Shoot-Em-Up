@@ -1,4 +1,5 @@
 import pygame
+import math
 
 # --- To make code more readable
 X = 0; Y = 1
@@ -66,13 +67,13 @@ def createSpawner(w, t):
     }
 
 
-def createEntity(width, height, x=0, y=0, vx=0, vy=0):
+def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
     return {
         'position': [x, y],
         'direction': [0,0], # normalized
-        'speed': 0,
+        'speed': speed,
         'size': [width, height],
-        'controller' : None # ref to function controlling direction and speed of entity
+        'moveType' : mT # ref to function controlling direction and speed of entity
     }
 
 def getPos(entity):
@@ -101,6 +102,27 @@ def setPosition(entity, coords):
 def setSize(entity, x, y):
     entity['size'][X] = x
     entity['size'][Y] = y
+
+def moveOneEnnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
+    print("hello")
+    print(entity)
+    vx = 0; vy = 0
+    if (entity['moveType'] == "VERTICAL"):
+        entity['direction'] = returnUnitVector(math.pi/2)
+    elif (entity['moveType'] == "HORIZONTAL"):
+        entity['direction'] = returnUnitVector(0)
+    elif (entity['moveType'] == "DIAGONAL"):
+        entity['direction'] = 3*math.pi/8
+
+    move(entity)
+
+def moveAllEnnemies():
+    for e in  ennemies:
+        moveOneEnnemy(e)
+
+def returnUnitVector(angle):
+    return (math.cos(angle), math.sin(angle))
+
 
 #Definition functions
 
@@ -177,8 +199,8 @@ def move(entity):
 
 # ennemies
 
-def createEnemy(width, height, x, y):
-    ennemies.append( createEntity(width, height, x, y) )
+def createEnemy(width, height, x, y, speed, mT = ""):
+    ennemies.append( createEntity(width, height, x, y, speed, mT) )
 
 def displayEnnemy():
     for ennemy in ennemies:
@@ -202,7 +224,7 @@ def control():
     if (len (spawnController['spawner']) > 0):
     
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']]):
-            createEnemy(50, 50, 50+100*spawnController['spawnIndex'], 300)
+            createEnemy(50, 50, 50+100*spawnController['spawnIndex'], 300, 2, "HORIZONTAL")
             spawnController['timeElapsed'] = 0
             spawnController['spawnIndex'] += 1
     
@@ -224,7 +246,7 @@ player = createEntity(SHIP_SIZE*2, SHIP_SIZE*2, SHIP_START_POS[0], SHIP_START_PO
 setSpeed(player, SHIP_SPEED)
 
 for i in range(1, 8):
-    createEnemy(ENNEMY_SIZE*2, ENNEMY_SIZE*2, 200*i, 100 )
+    createEnemy(ENNEMY_SIZE*2, ENNEMY_SIZE*2, 200*i, 0, 2, "" )
 
 while not finished:
 
@@ -239,6 +261,8 @@ while not finished:
                right = True
             if evenement.key == pygame.K_SPACE :
                shooting = True
+            if evenement.key == pygame.K_ESCAPE :
+               exit()
 
         if evenement.type == pygame.KEYUP :
             if evenement.key == pygame.K_LEFT :
@@ -254,10 +278,12 @@ while not finished:
     window.fill(BLACK)
     
     # actions
+    
     control()
     move(player)
     deplacer_tir()
     destroyProjOutBound()
+    moveAllEnnemies()
     shoot()
 
     collisionProjectilePlayersEnnemies()
