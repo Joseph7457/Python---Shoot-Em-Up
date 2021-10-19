@@ -40,6 +40,7 @@ oldTime = 0
 deltaTime = 0
   #Pour le futur
 
+score = 0
 
 pygame.init()
 window = pygame.display.set_mode(WINDOW_SIZE)
@@ -118,6 +119,7 @@ def collision_entite(entite1, entite2):
     return pygame.Rect.colliderect(rect1, rect2)
 
 def collisionProjectilePlayersEnnemies():
+    global score
     indexProjectileToDestroy = []
     indexEnnemiesToDestroy = []
 
@@ -129,6 +131,7 @@ def collisionProjectilePlayersEnnemies():
                 indexProjectileToDestroy.append(i)
                 indexEnnemiesToDestroy.append(j)
                 hasCollided = True
+                score += 1
             j = j + 1
 
     # Removing projectiles and ennemies that has collided
@@ -218,6 +221,12 @@ def control():
     
     return
 
+# Score
+
+def displayScore():
+    message = font.render("Score: " + str(score), True, WHITE)
+    window.blit(message, (0, 0))
+
 # ----- End function definition
 
 temps = pygame.time.Clock()
@@ -227,6 +236,8 @@ setSpeed(player, SHIP_SPEED)
 
 for i in range(1, 8):
     createEnemy(ENNEMY_SIZE*2, ENNEMY_SIZE*2, 200*i, 100 )
+
+font = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 
 while not finished:
 
@@ -268,10 +279,12 @@ while not finished:
     displayEnnemy()
     displayPlayer()
     displayProjectile()
+    displayScore()
     pygame.display.flip()
 
     temps.tick(60)
 
 pygame.display.quit()
 pygame.quit()
+
 
