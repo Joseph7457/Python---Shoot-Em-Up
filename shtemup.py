@@ -2,15 +2,6 @@ import pygame
 import math
 
 
-"""
->
->>Hello
->>>On avait ennemies avec deux 'n', parce que les anglais n'ont qu'à écrire leur langue correctement après tout.
->>>>Oui j'ai galeré au débuggage
->>>Oui je suis salty
->>bisous
->
-"""
 
 """
 PS: BUG DE L ECRAN D ACCUEIL
@@ -24,6 +15,9 @@ La diagonale gauche ne marche pas lorsqu'on maintient espace enfoncé.
 Pas de problèmes pour les autres combos de touche.
 """
 
+"""
+Le tir est inversé si on appuye sur CTRL
+"""
 
 # --- To make code more readable
 X = 0; Y = 1
@@ -117,14 +111,13 @@ def setAllWave():
     allWaveData.append(oneWaveData)
 
     t             = (1000,0,0,0,1000,0,0,0,1000,0,0,0,1000,0,0,0)
-    typeMov       = ("REBOND","REBOND","REBOND","REBOND"  ,"REBOND","REBOND","REBOND","REBOND", "REBOND","REBOND","REBOND","REBOND", "REBOND","REBOND","REBOND","REBOND" )
+    typeMov       = ("REBONDD","REBONDD","REBONDD","REBONDD"  ,"REBONDD","REBONDD","REBONDD","REBONDD", "REBONDD","REBONDD","REBONDD","REBONDD", "REBONDD","REBONDD","REBONDD","REBONDD" )
     x             = [esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp ]
     y             = [0, 0 , WINDOW_SIZE[1], WINDOW_SIZE[1] , 0 , 0 , WINDOW_SIZE[1], WINDOW_SIZE[1], 0, 0, WINDOW_SIZE[1], WINDOW_SIZE[1],0 ,0 ,WINDOW_SIZE[1], WINDOW_SIZE[1]]
     s             = [5,5,-5,-5, 6,6,-6,-6, 7,7,-7,-7, 8,8,-8,-8]
     oneWaveData   = []
     oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s) 
     allWaveData.append(oneWaveData)
-
     
     #print(allWaveData)
 
@@ -294,11 +287,21 @@ def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
     #print(entity)
     if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
+
     elif (entity['ship']['entity']['moveType'] == "HORIZONTAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(0)
+
     elif (entity['ship']['entity']['moveType'] == "DIAGONAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(3*math.pi/8)
-    elif (entity['ship']['entity']['moveType'] == "REBOND"):
+
+    elif (entity['ship']['entity']['moveType'] == "REBONDG"):
+        t = pygame.time.get_ticks()
+        while(t>1000):
+            t -= 1000
+        d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
+        entity['ship']['entity']['direction'] = returnUnitVector(-d)
+
+    elif (entity['ship']['entity']['moveType'] == "REBONDD"):
         t = pygame.time.get_ticks()
         while(t>1000):
             t -= 1000
@@ -600,5 +603,3 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
-
-
