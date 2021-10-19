@@ -364,22 +364,20 @@ def createPlayer(ship):
     return{
         'ship' : ship,
         'verticalInput' : 0,
-        'horrizontalInput' : 0,
+        'horizontalInput' : 0,
     }
 
     #Methods
 def inputPlayerHor(Player, value):
-    Player['horrizontalInput'] += value
+    Player['horizontalInput'] += value
 
 
 def inputPlayerVer(Player, value):
     Player['verticalInput'] += value
 
-def inputPlayerShoot(Player):
-    shipShoot(getPlayerShip(Player1))
 
 def movePlayer(Player):
-    [x, y] = normalize2dVector(Player['horrizontalInput'], Player['verticalInput'])
+    [x, y] = normalize2dVector(Player['horizontalInput'], Player['verticalInput'])
     setDirection(getShipEntity(Player['ship']), x, y)
     shipMove(Player['ship'])
 
@@ -500,13 +498,13 @@ def inputManager(event):
     global Player1, finished, playing, projectiles_axe 
     if event.type == pygame.KEYDOWN :
         #Player 1
-        if event.key == pygame.K_LEFT :
+        if event.key == pygame.K_q :
             inputPlayerHor(Player1, -1)
-        if event.key == pygame.K_RIGHT :
+        if event.key == pygame.K_d :
             inputPlayerHor(Player1, 1)
-        if event.key == pygame.K_UP:
+        if event.key == pygame.K_z:
             inputPlayerVer(Player1, -1)
-        if event.key == pygame.K_DOWN:
+        if event.key == pygame.K_s:
             inputPlayerVer(Player1, 1)
         if event.key == pygame.K_SPACE :
             inputPlayerShoot(Player1)
@@ -522,13 +520,13 @@ def inputManager(event):
 
     if event.type == pygame.KEYUP :
         #Player 1
-        if event.key == pygame.K_LEFT :
+        if event.key == pygame.K_q :
             inputPlayerHor(Player1, 1)
-        if event.key == pygame.K_RIGHT :
+        if event.key == pygame.K_d :
             inputPlayerHor(Player1, -1)
-        if event.key == pygame.K_UP:
+        if event.key == pygame.K_z:
             inputPlayerVer(Player1, 1)
-        if event.key == pygame.K_DOWN:
+        if event.key == pygame.K_s:
             inputPlayerVer(Player1, -1)
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
@@ -564,6 +562,7 @@ while not finished:
 
         if event.type == pygame.KEYDOWN :
             playing = True
+            inputManager(event)
 
     displayMenu()
     pygame.display.flip()
@@ -589,6 +588,10 @@ while not finished:
         
         shipShoot(getPlayerShip(Player1))
         movePlayer(Player1)
+        
+        print(Player1['horizontalInput'])
+        print(Player1['verticalInput'])
+
         moveAllEnnemies()
         collisionProjectilePlayersEnnemies()
         
