@@ -18,6 +18,12 @@ SI VOUS APPUYEZ SUR ESPACE, NO PROBLEM
 MAIS SI VOUS APPUYEZ SUR UNE DIRECTION, ELLE RESTE ENFONCEE POUR LA GAME
 """
 
+"""
+BUG 2 :
+La diagonale gauche ne marche pas lorsqu'on maintient espace enfoncé. 
+Pas de problèmes pour les autres combos de touche.
+"""
+
 
 # --- To make code more readable
 X = 0; Y = 1
@@ -43,6 +49,7 @@ PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 
 #Projectiles
 PROJECTILE_SPEED   = 20
+projectiles_axe    = 1
 PROJECTILE_SIZE    = 3
 projectiles = []
 
@@ -67,39 +74,58 @@ def setAllWave():
 
     allWaveData = []
 
-    esp = WINDOW_SIZE[0]/9
-    t             = [1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000]
-    typeMov       = ["VERTICAL"   ,"VERTICAL" ,"VERTICAL" ,"VERTICAL"  ,"VERTICAL","VERTICAL" ,"VERTICAL" ,"VERTICAL" ]
-    x             = [esp, 2*esp , 3*esp , 4*esp ,5*esp ,6*esp ,7*esp ,8*esp]
-    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+
+    esp = WINDOW_SIZE[0]/12
+    t             = [1000         ,1000       ,0       ,1000        ,1000     , 0      , 1000      ,       1000, 0]
+    typeMov       = ["VERTICAL"   ,"VERTICAL" ,"VERTICAL" ,"VERTICAL"  ,"VERTICAL","VERTICAL" ,"VERTICAL" ,"VERTICAL","VERTICAL" ]
+    x             = [6*esp, 5*esp , 7*esp , 6*esp ,5*esp ,7*esp ,6*esp ,4*esp, 8 * esp]
+    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0, 0]
+    s             = [3, 6 , 6 , 4 , 6 , 6 , 8 , 10, 10]
     oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y)
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s)
     allWaveData.append(oneWaveData)
 
-    esp = WINDOW_SIZE[1]/9
-    t             = (1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000)
-    typeMov       = ("HORIZONTAL"   ,"HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL"  ,"HORIZONTAL","HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL" )
-    x             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
-    y             = [esp, 2*esp , esp , 2*esp , 3*esp , 2*esp , esp , 5*esp]
+
+
+    esp = WINDOW_SIZE[1]/8
+    t             = (1000 ,1000  ,1000 ,1000 ,1000 , 1000 , 1000 , 1000, 1000, 1000, 1000, 1000, 1000, 1000)
+    typeMov       = ("HORIZONTAL"   ,"HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL"  ,"HORIZONTAL","HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL", "HORIZONTAL"   ,"HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL"  ,"HORIZONTAL","HORIZONTAL" )
+    x             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0, 0, 0 , 0 , 0 , 0 , 0 ]
+    y             = [esp, 2*esp , esp , 2*esp , 3*esp , 2*esp , 3*esp , 4*esp, 3*esp, 4*esp, 5*esp, 4*esp, 5*esp, 4 *esp]
+    s             = [3, 3 , 3 , 3 , 3 , 3 , 3 , 3, 3, 3 , 3 , 3 , 3 , 3]
     oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y)
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s)
+    allWaveData.append(oneWaveData)
+
+    esp = WINDOW_SIZE[0]/12
+    t             = [1000         ,1000       ,0       ,1000        ,1000     , 0      , 1000      ,       1000, 0]
+    typeMov       = ["VERTICAL"   ,"VERTICAL" ,"VERTICAL" ,"VERTICAL"  ,"VERTICAL","VERTICAL" ,"VERTICAL" ,"VERTICAL","VERTICAL" ]
+    x             = [6*esp, 5*esp , 7*esp , 6*esp ,4*esp ,8*esp ,6*esp ,3*esp, 9 * esp]
+    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0, 0]
+    s             = [4, 7 , 7 , 5 , 8 , 8 , 9 , 11, 11]
+    oneWaveData = []
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s)
     allWaveData.append(oneWaveData)
     
     t             = [1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000]
     typeMov       = ["DIAGONAL"   ,"DIAGONAL" ,"DIAGONAL" ,"DIAGONAL"  ,"DIAGONAL","DIAGONAL" ,"DIAGONAL" ,"DIAGONAL" ]
     x             = [esp, 2*esp , esp , 2*esp ,esp ,2*esp ,esp ,2*esp]
     y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+    s             = [7, 7 , 7 , 7 , 7 , 7 , 7 , 7]
     oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y) 
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s) 
     allWaveData.append(oneWaveData)
 
-    t             = (1000         ,  0       ,1000       , 0        ,1000      , 0      , 1000      ,      00)
-    typeMov       = ("REBOND"   ,"REBOND" ,"REBOND" ,"REBOND"  ,"REBOND","REBOND" ,"REBOND" ,"REBOND" )
-    x             = [esp, 2*esp , 2*esp , 3*esp ,3*esp ,4*esp ,4*esp ,5*esp]
-    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+    t             = (1000,0,0,0,1000,0,0,0,1000,0,0,0,1000,0,0,0)
+    typeMov       = ("REBOND","REBOND","REBOND","REBOND"  ,"REBOND","REBOND","REBOND","REBOND", "REBOND","REBOND","REBOND","REBOND", "REBOND","REBOND","REBOND","REBOND" )
+    x             = [esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp ]
+    y             = [0, 0 , WINDOW_SIZE[1], WINDOW_SIZE[1] , 0 , 0 , WINDOW_SIZE[1], WINDOW_SIZE[1], 0, 0, WINDOW_SIZE[1], WINDOW_SIZE[1],0 ,0 ,WINDOW_SIZE[1], WINDOW_SIZE[1]]
+    s             = [5,5,-5,-5, 6,6,-6,-6, 7,7,-7,-7, 8,8,-8,-8]
     oneWaveData   = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y) 
-    #allWaveData.append(oneWaveData)
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s) 
+    allWaveData.append(oneWaveData)
+
+    
     #print(allWaveData)
 
     return allWaveData
@@ -133,12 +159,13 @@ def createSpawnController():
     } 
     
 
-def createSpawner(t, w, x, y):
+def createSpawner(t, w, x, y, s):
     return{
         'type'   : w,
         'timer'  : t,
         'x'      : x,
-        'y'      : y
+        'y'      : y,
+        'speed'  : s
     }
 
 
@@ -251,9 +278,9 @@ def shipShoot(Ship):
         shipSize = getSize(getShipEntity(Ship))
 
         newProjectile = createEntity(PROJECTILE_SIZE*2, PROJECTILE_SIZE*2)
-        setPosition(newProjectile, (shipPos[X] + shipSize[X]//2, shipPos[Y] + shipSize[Y]//2))
+        setPosition(newProjectile, (shipPos[X] + (shipSize[X]//2), shipPos[Y] - (shipSize[Y]//2)*projectiles_axe ))
         setSpeed(newProjectile, PROJECTILE_SPEED)
-        setDirection(newProjectile, 0, -1)
+        setDirection(newProjectile, 0, -1*projectiles_axe )
         projectiles.append(newProjectile)
 
 def shipMove(Ship):
@@ -264,7 +291,7 @@ def shipMove(Ship):
 
 def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
     #print("hello"); 
-    print(entity)
+    #print(entity)
     if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
     elif (entity['ship']['entity']['moveType'] == "HORIZONTAL"):
@@ -277,7 +304,6 @@ def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
             t -= 1000
         d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
         entity['ship']['entity']['direction'] = returnUnitVector(d)
-        entity['ship']['entity']['speed'] *= 2
         
 
     shipMove(entity['ship'])
@@ -419,34 +445,38 @@ def destroyProjOutBound():
 
 def control():
     global spawnController, oldTime, deltaTime
+
+    # celle  ci il faudrait l'extraire , elle fait part de l'initialisation
     if (spawnController == 0):
         spawnController = createSpawnController()
         # allWaveData [Vague][type de données][index 
         for w in range(len(allWaveData)):
-            spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3])
+            spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3], allWaveData[w][4])
             spawnController['spawner'].append(spawner)
- 
-    
+    # jusqu'ici je pense
+
+    print(len (spawnController['spawner']))
     if (len (spawnController['spawner']) > 0):
     
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
             wi = spawnController['waveIndex']; i = spawnController['spawnIndex']
-            print("hello hello hello hello")
-            print(spawnController['spawner'][wi]['y'])
+
             addEnemy(
             createEnemy(
                 createShip(
                     createEntity(50, 50, 
                                 spawnController['spawner'][wi]['x'][i], 
                                 spawnController['spawner'][wi]['y'][i],
-                                2, spawnController['spawner'][wi]['type'][i] 
+                                spawnController['spawner'][wi]['speed'][i], 
+                                spawnController['spawner'][wi]['type'][i] 
                                 )))) 
                                 
                                 #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
             spawnController['timeElapsed'] = 0
             spawnController['spawnIndex'] += 1
     
-        if ( ( spawnController['spawnIndex'] >= len(spawnController['spawner'][0]['timer'])-1  ) ):
+    if (len(spawnController['spawner']) > 0):
+        if ( ( spawnController['spawnIndex'] >= len(spawnController['spawner'][0]['timer'])  ) ):
             spawnController['spawner'].pop(0)
             spawnController['spawnIndex'] = 0
             #spawnController['waveIndex'] += 1
@@ -464,7 +494,7 @@ Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_S
                                   PLAYER1_WEAPON_COOLDOWN, 0, 1, False))
 
 def inputManager(event):
-    global Player1, finished, playing
+    global Player1, finished, playing, projectiles_axe 
     if event.type == pygame.KEYDOWN :
         #Player 1
         if event.key == pygame.K_LEFT :
@@ -477,6 +507,12 @@ def inputManager(event):
             inputPlayerVer(Player1, 1)
         if event.key == pygame.K_SPACE :
             inputPlayerShoot(Player1)
+        if event.key == pygame.K_LCTRL:
+            if (projectiles_axe == 1 ):
+                projectiles_axe  =-1
+            else:
+                projectiles_axe =1
+
         if event.key == pygame.K_ESCAPE:
             finished = True
             playing = False 
