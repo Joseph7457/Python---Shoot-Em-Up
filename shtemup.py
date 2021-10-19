@@ -41,7 +41,7 @@ finished   = False;
 playing = False
 
 # player 1 parameters
-PLAYER1_SHIP_SIZE  = 40
+PLAYER1_SHIP_SIZE  = 80
 PLAYER1_SHIP_SPEED = 10
 PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
@@ -54,7 +54,7 @@ PROJECTILE_SIZE    = 3
 projectiles = []
 
 #Ennemies
-ENNEMY_SIZE = 40
+ENNEMY_SIZE = 80
 
 #Spawner
 spawner = []
@@ -267,7 +267,7 @@ def displayShip(Ship, color):
     pygame.draw.circle(window, color, 
                        (int(getPos(getShipEntity(Ship))[X] + getSize(getShipEntity(Ship))[X]//2),
                         int(getPos(getShipEntity(Ship))[Y] + getSize(getShipEntity(Ship))[Y]//2)),
-                       getSize(getShipEntity(Ship))[X])
+                       getSize(getShipEntity(Ship))[X]//2)
 
 def shipShoot(Ship):
     if((isShipShooting(Ship)) and (pygame.time.get_ticks() - getShipTimeLastShot(Ship) >= getShipShootingCooldown(Ship))):
