@@ -231,6 +231,12 @@ def displayMessage(font, string, color, position):
     message = font.render(string, True, color)
     window.blit(message, position)
 
+# Menu
+
+def displayMenu():
+    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
+    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
+
 # ----- End function definition
 
 temps = pygame.time.Clock()
@@ -253,8 +259,7 @@ while not finished:
         if evenement.type == pygame.KEYDOWN :
             playing = True
 
-    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
-    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
+    displayMenu()
     pygame.display.flip()
 
     while playing:
