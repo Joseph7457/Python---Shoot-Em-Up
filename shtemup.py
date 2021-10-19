@@ -104,6 +104,11 @@ def setSize(entity, x, y):
 
 #Definition functions
 
+# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
+def removeFromList(list, indexesToRemove):
+    for i in range(len(indexesToRemove)):
+        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
+
 #--- Collisions
 
 # Return True if collision occurs, False otherway
@@ -128,11 +133,8 @@ def collisionProjectilePlayersEnnemies():
 
     # Removing projectiles and ennemies that has collided
 
-    for i in range(len(indexProjectileToDestroy)):
-        projectiles.pop(indexProjectileToDestroy[i] - i) #indexProjectileToDestroy[i] >= i because indexProjectileToDestroy is in increasing order
-
-    for i in range(len(indexEnnemiesToDestroy)):
-        destroyEnemy(indexEnnemiesToDestroy[i] - i) #indexEnnemiesToDestroy[i] >= i because indexEnnemiesToDestroy is in increasing order
+    removeFromList(projectiles, indexProjectileToDestroy) 
+    removeFromList(ennemies, indexEnnemiesToDestroy)
 
 #--- Player
 
@@ -272,3 +274,4 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
+
