@@ -1,6 +1,24 @@
 import pygame
 import math
 
+
+"""
+>
+>>Hello
+>>>On avait ennemies avec deux 'n', parce que les anglais n'ont qu'à écrire leur langue correctement après tout.
+>>>>Oui j'ai galeré au débuggage
+>>>Oui je suis salty
+>>bisous
+>
+"""
+
+"""
+PS: BUG DE L ECRAN D ACCUEIL
+SI VOUS APPUYEZ SUR ESPACE, NO PROBLEM
+MAIS SI VOUS APPUYEZ SUR UNE DIRECTION, ELLE RESTE ENFONCEE POUR LA GAME
+"""
+
+
 # --- To make code more readable
 X = 0; Y = 1
 
@@ -38,9 +56,61 @@ spawner = []
 spawnController = 0
 oldTime = 0
 deltaTime = 0
-  #Pour le futur
 
+
+#Score
 score = 0
+
+# Definition of every wave
+
+def setAllWave():
+
+    allWaveData = []
+
+    esp = WINDOW_SIZE[0]/9
+    t             = [1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000]
+    typeMov       = ["VERTICAL"   ,"VERTICAL" ,"VERTICAL" ,"VERTICAL"  ,"VERTICAL","VERTICAL" ,"VERTICAL" ,"VERTICAL" ]
+    x             = [esp, 2*esp , 3*esp , 4*esp ,5*esp ,6*esp ,7*esp ,8*esp]
+    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+    oneWaveData = []
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y)
+    allWaveData.append(oneWaveData)
+
+    esp = WINDOW_SIZE[1]/9
+    t             = (1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000)
+    typeMov       = ("HORIZONTAL"   ,"HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL"  ,"HORIZONTAL","HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL" )
+    x             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+    y             = [esp, 2*esp , esp , 2*esp , 3*esp , 2*esp , esp , 5*esp]
+    oneWaveData = []
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y)
+    allWaveData.append(oneWaveData)
+    
+    t             = [1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000]
+    typeMov       = ["DIAGONAL"   ,"DIAGONAL" ,"DIAGONAL" ,"DIAGONAL"  ,"DIAGONAL","DIAGONAL" ,"DIAGONAL" ,"DIAGONAL" ]
+    x             = [esp, 2*esp , esp , 2*esp ,esp ,2*esp ,esp ,2*esp]
+    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+    oneWaveData = []
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y) 
+    allWaveData.append(oneWaveData)
+
+    t             = (1000         ,  0       ,1000       , 0        ,1000      , 0      , 1000      ,      00)
+    typeMov       = ("REBOND"   ,"REBOND" ,"REBOND" ,"REBOND"  ,"REBOND","REBOND" ,"REBOND" ,"REBOND" )
+    x             = [esp, 2*esp , 2*esp , 3*esp ,3*esp ,4*esp ,4*esp ,5*esp]
+    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
+    oneWaveData   = []
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y) 
+    #allWaveData.append(oneWaveData)
+    #print(allWaveData)
+
+    return allWaveData
+
+allWaveData = setAllWave()
+
+
+
+
+
+
 
 pygame.init()
 window = pygame.display.set_mode(WINDOW_SIZE)
@@ -59,27 +129,27 @@ def createSpawnController():
         'spawnIndex' : 0,
         'waveIndex'  : 0,
         'spawner' : [],
-        'enemies': [],
         'timeElapsed': 0
     } 
     
 
-def createSpawner(w, t):
+def createSpawner(t, w, x, y):
     return{
         'type'   : w,
-        'timer'  : t
+        'timer'  : t,
+        'x'      : x,
+        'y'      : y
     }
 
-  
-#--- DEFINITION ENTITY ---#
 
-def createEntity(width, height, x=0, y=0, speed = 0):
+def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
     return {
         'position': [x, y],
+        'position initiale': [x, y],
         'direction': [0,0], # normalized
         'speed': speed,
         'size': [width, height],
-        'controller' : None # ref to function controlling direction and speed of entity
+        'moveType' : mT # ref to function controlling direction and speed of entity
     }
 
     #Getters
@@ -190,6 +260,49 @@ def shipMove(Ship):
     move(Ship['entity'])
 
 #--- END SHIPS ---#
+
+
+def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
+    #print("hello"); 
+    print(entity)
+    if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
+        entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
+    elif (entity['ship']['entity']['moveType'] == "HORIZONTAL"):
+        entity['ship']['entity']['direction'] = returnUnitVector(0)
+    elif (entity['ship']['entity']['moveType'] == "DIAGONAL"):
+        entity['ship']['entity']['direction'] = returnUnitVector(3*math.pi/8)
+    elif (entity['ship']['entity']['moveType'] == "REBOND"):
+        t = pygame.time.get_ticks()
+        while(t>1000):
+            t -= 1000
+        d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
+        entity['ship']['entity']['direction'] = returnUnitVector(d)
+        entity['ship']['entity']['speed'] *= 2
+        
+
+    shipMove(entity['ship'])
+
+def mapToNewBoundaries(n, a, b, c, d):
+
+
+    b -= a
+    a = 0
+
+    ctemp = c
+    d -= c
+    c = 0
+
+    ratio = d/b
+    n = (n*ratio) + ctemp
+
+    return n
+    
+def moveAllEnnemies():
+    for e in  enemies:
+        moveOneEnemy(e)
+
+def returnUnitVector(angle):
+    return (math.cos(angle), math.sin(angle))
 
 #--- ENEMIES ---#
 enemies = []
@@ -303,25 +416,40 @@ def destroyProjOutBound():
 
 #--- Control
 
+
 def control():
     global spawnController, oldTime, deltaTime
     if (spawnController == 0):
         spawnController = createSpawnController()
-        print()
-        spawnController['spawner'].append(   createSpawner( (0   ,0   , 0  ,0   ,0  ,0   ,0   ,0    ,0   ,0   ,0) , 
-                                                            (200,200,400,400,300,300, 500, 500 ,500 ,500 ,500)  )  )
+        # allWaveData [Vague][type de données][index 
+        for w in range(len(allWaveData)):
+            spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3])
+            spawnController['spawner'].append(spawner)
+ 
     
     if (len (spawnController['spawner']) > 0):
     
-        if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']]):
-            newEnemy = createEnemy(createShip(createEntity(50, 50, 50+100*spawnController['spawnIndex'], 300)))
-            addEnemy(newEnemy)
+        if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
+            wi = spawnController['waveIndex']; i = spawnController['spawnIndex']
+            print("hello hello hello hello")
+            print(spawnController['spawner'][wi]['y'])
+            addEnemy(
+            createEnemy(
+                createShip(
+                    createEntity(50, 50, 
+                                spawnController['spawner'][wi]['x'][i], 
+                                spawnController['spawner'][wi]['y'][i],
+                                2, spawnController['spawner'][wi]['type'][i] 
+                                )))) 
+                                
+                                #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
             spawnController['timeElapsed'] = 0
             spawnController['spawnIndex'] += 1
     
         if ( ( spawnController['spawnIndex'] >= len(spawnController['spawner'][0]['timer'])-1  ) ):
-            spawnController['spawner'].pop()
+            spawnController['spawner'].pop(0)
             spawnController['spawnIndex'] = 0
+            #spawnController['waveIndex'] += 1
             
     deltaTime = pygame.time.get_ticks()-oldTime
     oldTime   = pygame.time.get_ticks()
@@ -329,13 +457,14 @@ def control():
     
     return
 
+
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE, 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED),
                                   PLAYER1_WEAPON_COOLDOWN, 0, 1, False))
 
 def inputManager(event):
-    global Player1
+    global Player1, finished, playing
     if event.type == pygame.KEYDOWN :
         #Player 1
         if event.key == pygame.K_LEFT :
@@ -348,7 +477,9 @@ def inputManager(event):
             inputPlayerVer(Player1, 1)
         if event.key == pygame.K_SPACE :
             inputPlayerShoot(Player1)
-
+        if event.key == pygame.K_ESCAPE:
+            finished = True
+            playing = False 
 
     if event.type == pygame.KEYUP :
         #Player 1
@@ -382,13 +513,7 @@ def displayMenu():
 # ----- End function definition
 
 temps = pygame.time.Clock()
-
-
-for i in range(1, 8):
-    addEnemy(createEnemy(createShip(createEntity(ENNEMY_SIZE*2, ENNEMY_SIZE*2, 200*i, 100 ),
-                                    1, 0, -1, False)))
     
-
 scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
@@ -425,7 +550,7 @@ while not finished:
         
         shipShoot(getPlayerShip(Player1))
         movePlayer(Player1)
-
+        moveAllEnnemies()
         collisionProjectilePlayersEnnemies()
         
         # display
