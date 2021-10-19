@@ -424,6 +424,13 @@ def collisionProjectilePlayersEnnemies():
     removeFromList(projectiles, indexProjectileToDestroy) 
     removeFromList(enemies, indexEnemiesToDestroy)
     
+# Returns True if the player collides with an enemy
+def collisionPlayerEnnemies():
+    for i in range(len(enemies)):
+        if collision_entite(getShipEntity(getEnemyShip(enemies[i])), getShipEntity(getPlayerShip(Player1))):
+            return True
+    else:
+        return False    
 
 #--- PROJECTILE ---#
 def displayProjectile():
