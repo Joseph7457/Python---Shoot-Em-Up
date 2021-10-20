@@ -541,13 +541,13 @@ def inputManager(event):
     global Player1, finished, playing, projectiles_axe 
     if event.type == pygame.KEYDOWN :
         #Player 1
-        if event.key == pygame.K_q :
+        if event.key == pygame.K_q or event.key == pygame.K_LEFT:
             inputPlayerHor(Player1, -1)
-        if event.key == pygame.K_d :
+        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
             inputPlayerHor(Player1, 1)
-        if event.key == pygame.K_z:
+        if event.key == pygame.K_z or event.key == pygame.K_UP:
             inputPlayerVer(Player1, -1)
-        if event.key == pygame.K_s:
+        if event.key == pygame.K_s or event.key == pygame.K_DOWN:
             inputPlayerVer(Player1, 1)
         if event.key == pygame.K_SPACE :
             inputPlayerShoot(Player1)
@@ -563,13 +563,13 @@ def inputManager(event):
 
     if event.type == pygame.KEYUP :
         #Player 1
-        if event.key == pygame.K_q :
+        if event.key == pygame.K_q or event.key == pygame.K_LEFT:
             inputPlayerHor(Player1, 1)
-        if event.key == pygame.K_d :
+        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
             inputPlayerHor(Player1, -1)
-        if event.key == pygame.K_z:
+        if event.key == pygame.K_z or event.key == pygame.K_UP:
             inputPlayerVer(Player1, 1)
-        if event.key == pygame.K_s:
+        if event.key == pygame.K_s or event.key == pygame.K_DOWN:
             inputPlayerVer(Player1, -1)
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
