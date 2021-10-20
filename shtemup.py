@@ -12,39 +12,26 @@ Pas de problèmes pour les autres combos de touche.
 Bug from pygame -> unsolvable
 """
 
-#--- To make code more readable
-def loadify(img):
-    return pygame.image.load(img).convert_alpha()
+# --- To make code more readable
 X = 0; Y = 1
-
-#=---- CONSTANT DECLARATION ----=#
-#      ====================
 
 # window size
 WINDOW_SIZE = [1600, 900]
+HEIGHT = WINDOW_SIZE[1]
+WIDTH  = WINDOW_SIZE[0]
 REFRESH_RATE = 60
 
-# definition of colors
-BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
-
-#--- INIT PYGAME ---#
-pygame.init()
-window = pygame.display.set_mode(WINDOW_SIZE)
-window.fill(BLACK)
-#--- END INIT PYGAME ---#
-
-# paths
+#paths
 ANIMATION_PATH = 'sprites/animations/'
 IMAGES_PATH = 'sprites/images/'
 SOUND_EFFECT_PATH = 'sounds/soundEffects/'
 MUSIC_PATH = 'sounds/musics/'
 
-# fonts
-SCORE_FONT = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
-MENU_FONT = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
-
+# definition of colors
+BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
 
 # booleans
+
 finished   = False; 
 playing = False
 
@@ -55,13 +42,13 @@ PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 
-# Projectiles
+#Projectiles
 PROJECTILE_SPEED   = 20
 projectiles_axe    = 1
 PROJECTILE_SIZE    = 3
 projectiles = []
 
-# Ennemies
+#Ennemies
 ENEMY_SIZE = 80
 
 # Background
@@ -74,6 +61,7 @@ ANIMATIONS_TO_LOAD = {
 #   'name'            : (nImages, 'ext', size                                         ),
     'player1_base'    : (10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE]       ),
     'enemy1_base'     : (10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]                     ),
+    'skinA'           : (19     , 'png', [400, 400]                                   ),
 }
 IMAGES_TO_LOAD = {
 # format:
@@ -83,69 +71,50 @@ IMAGES_TO_LOAD = {
     'backGround_2'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
 }
 
+#Score
+score = 0
+
 # Definition of every wave
+
 def setAllWave():
 
     allWaveData = []
 
 
-    esp = WINDOW_SIZE[0]/12
-    t             = [1000         ,1000       ,0       ,1000        ,1000     , 0      , 1000      ,       1000, 0]
-    typeMov       = ["VERTICAL"   ,"VERTICAL" ,"VERTICAL" ,"VERTICAL"  ,"VERTICAL","VERTICAL" ,"VERTICAL" ,"VERTICAL","VERTICAL" ]
-    x             = [6*esp, 5*esp , 7*esp , 6*esp ,5*esp ,7*esp ,6*esp ,4*esp, 8 * esp]
-    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0, 0]
-    s             = [3, 6 , 6 , 4 , 6 , 6 , 8 , 10, 10]
+
+    t = [1000, 2000, 0, 1000 ];
+    x = [WIDTH/2, WIDTH/4, 3*WIDTH/4, WIDTH/2 ];
+    y = [-250, -250, -250, -250 ];
+    s = [5, 6, 6, 5 ];
+    typeMov = ["VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL" ];
+    skin = ["skinA", "skinA", "skinA", "skinA" ];
     oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s)
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s), oneWaveData.append(skin)
     allWaveData.append(oneWaveData)
 
 
-
-    esp = WINDOW_SIZE[1]/8
-    t             = (1000 ,1000  ,1000 ,1000 ,1000 , 1000 , 1000 , 1000, 1000, 1000, 1000, 1000, 1000, 1000)
-    typeMov       = ("HORIZONTAL"   ,"HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL"  ,"HORIZONTAL","HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL", "HORIZONTAL"   ,"HORIZONTAL" ,"HORIZONTAL" ,"HORIZONTAL"  ,"HORIZONTAL","HORIZONTAL" )
-    x             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0, 0, 0 , 0 , 0 , 0 , 0 ]
-    y             = [esp, 2*esp , esp , 2*esp , 3*esp , 2*esp , 3*esp , 4*esp, 3*esp, 4*esp, 5*esp, 4*esp, 5*esp, 4 *esp]
-    s             = [3, 3 , 3 , 3 , 3 , 3 , 3 , 3, 3, 3 , 3 , 3 , 3 , 3]
+    t = [1000, 2000, 0, 1000 ];
+    x = [WIDTH/2, WIDTH/4, 3*WIDTH/4, WIDTH/2 ];
+    y = [-250, -250, -250, -250 ];
+    s = [5, 6, 6, 5 ];
+    typeMov = ["VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL" ];
+    skin = ["skinA", "skinA", "skinA", "skinA" ];
     oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s)
+    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s), oneWaveData.append(skin)
     allWaveData.append(oneWaveData)
 
-    esp = WINDOW_SIZE[0]/12
-    t             = [1000         ,1000       ,0       ,1000        ,1000     , 0      , 1000      ,       1000, 0]
-    typeMov       = ["VERTICAL"   ,"VERTICAL" ,"VERTICAL" ,"VERTICAL"  ,"VERTICAL","VERTICAL" ,"VERTICAL" ,"VERTICAL","VERTICAL" ]
-    x             = [6*esp, 5*esp , 7*esp , 6*esp ,4*esp ,8*esp ,6*esp ,3*esp, 9 * esp]
-    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0, 0]
-    s             = [4, 7 , 7 , 5 , 8 , 8 , 9 , 11, 11]
-    oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s)
-    allWaveData.append(oneWaveData)
-    
-    t             = [1000         ,1000       ,1000       ,1000        ,1000      , 1000      , 1000      ,       1000]
-    typeMov       = ["DIAGONAL"   ,"DIAGONAL" ,"DIAGONAL" ,"DIAGONAL"  ,"DIAGONAL","DIAGONAL" ,"DIAGONAL" ,"DIAGONAL" ]
-    x             = [esp, 2*esp , esp , 2*esp ,esp ,2*esp ,esp ,2*esp]
-    y             = [0, 0 , 0 , 0 , 0 , 0 , 0 , 0]
-    s             = [7, 7 , 7 , 7 , 7 , 7 , 7 , 7]
-    oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s) 
-    allWaveData.append(oneWaveData)
 
-    t             = (1000,0,0,0,1000,0,0,0,1000,0,0,0,1000,0,0,0)
-    typeMov       = ("REBONDD","REBONDD","REBONDD","REBONDD"  ,"REBONDD","REBONDD","REBONDD","REBONDD", "REBONDD","REBONDD","REBONDD","REBONDD", "REBONDD","REBONDD","REBONDD","REBONDD" )
-    x             = [esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp, esp, 2*esp , WINDOW_SIZE[0]-esp, WINDOW_SIZE[0]-2*esp ]
-    y             = [0, 0 , WINDOW_SIZE[1], WINDOW_SIZE[1] , 0 , 0 , WINDOW_SIZE[1], WINDOW_SIZE[1], 0, 0, WINDOW_SIZE[1], WINDOW_SIZE[1],0 ,0 ,WINDOW_SIZE[1], WINDOW_SIZE[1]]
-    s             = [5,5,-5,-5, 6,6,-6,-6, 7,7,-7,-7, 8,8,-8,-8]
-    oneWaveData   = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s) 
-    allWaveData.append(oneWaveData)
 
     return allWaveData
 
 allWaveData = setAllWave()
 
 
-#=---- FUNCTION AND OBJECT DEFINITIONS ----=#
-#      ===============================   
+pygame.init()
+window = pygame.display.set_mode(WINDOW_SIZE)
+window.fill(BLACK)
+
+
 
 #--- utility function ---#
 def normalize2dVector(x, y):
@@ -154,32 +123,31 @@ def normalize2dVector(x, y):
     module = math.sqrt(x**2+y**2)
     return (x/module, y/module)
 
-def returnUnitVector(angle):
-    return (math.cos(angle), math.sin(angle))
+def loadify(img):
+    return pygame.image.load(img).convert_alpha()
 
-# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
-def removeFromList(list, indexesToRemove):
-    for i in range(len(indexesToRemove)):
-        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
+def createSpawnController():
+    return{
+        'spawnIndex' : 0,
+        'waveIndex'  : 0,
+        'spawner' : [],
+        'timeElapsed': 0
+    } 
+    
 
-def mapToNewBoundaries(n, a, b, c, d):
-    b -= a
-    a = 0
-
-    ctemp = c
-    d -= c
-    c = 0
-
-    ratio = d/b
-
-    return (n*ratio) + ctemp
-
-#--- END UTILITY FUNCTIOM ---#
+def createSpawner(t, w, x, y, s, skin):
+    return{
+        'type'   : w,
+        'timer'  : t,
+        'x'      : x,
+        'y'      : y,
+        'speed'  : s,
+        'skin'   : skin
+    }
 
 
 #--- IMAGE BANK ---#
 
-# The bank stores all the necessary images for the good functionning of the code
 ImageBank = {
     'fixed': {},
     'animated' : {},
@@ -196,10 +164,11 @@ def getFixedImage(imageName):
     else:
         return ImageBank['fixed']['missing_texture']
 
-# animations location follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
+# animations follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
 def addAnimationToBank(animationName, nImages, ext, imageScale):
     ImageBank['animated'][animationName] = []
     for i in range(nImages):
+        print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
         image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
         ImageBank['animated'][animationName].append(pygame.transform.scale(image, (imageScale[X], imageScale[Y])))
 
@@ -210,6 +179,9 @@ def getAnimationFrame(animationName, frame):
         return ImageBank['fixed']['missing_texture']
 
 def getLenAnimation(animationName):
+    print(ImageBank['animated'].keys())
+    print(animationName)
+    print(animationName in ImageBank['animated'])
     if animationName in ImageBank['animated']:
         return len(ImageBank['animated'][animationName])
     else:
@@ -227,7 +199,6 @@ fillImageBank()
 
 #--- AMIMATIONS ---#
 
-# create a new animation based on one stored in the image bank
 def createAnimation(animationName, animationSpeed):
     return{
         'animationName' : animationName,
@@ -237,15 +208,19 @@ def createAnimation(animationName, animationSpeed):
     }
 
 def getNextAnimationFrame(animation):
+
+    print("bonsoir")
+    print("animName = " +animation['animationName'])
+
+    print("longueur = "); print(getLenAnimation(animation['animationName']))
     animation['indexCurrImage'] = (animation['indexCurrImage'] + 1) % getLenAnimation(animation['animationName'])
     animation['timeSinceLastAnim'] = pygame.time.get_ticks()
     return getAnimationFrame(animation['animationName'], animation['indexCurrImage'])
 
-def canAnimate(animation, currTime):
+def shouldAnimate(animation, currTime):
     return animation['timeSinceLastAnim'] + animation['frameDuration'] < currTime
 
 #--- END ANIMATION ---#
-
 
 #--- ENTITY ---#
 
@@ -295,6 +270,9 @@ def setAnimation(entity, animationName, animationSpeed):
     entity['isAnimated'] = True
     entity['animation'] = createAnimation(animationName, animationSpeed)
 
+
+
+
     #Method
 def move(entity):
     entity['position'][X] += entity['direction'][X] * entity['speed']
@@ -302,7 +280,7 @@ def move(entity):
 
 def displayEntity(entity, currTime):
     if entity['isAnimated']:
-        if canAnimate(entity['animation'], currTime):
+        if shouldAnimate(entity['animation'], currTime):
             entity['currImage'] = getNextAnimationFrame(entity['animation'])
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
@@ -378,7 +356,6 @@ def shipMove(Ship):
 
 #--- END SHIPS ---#
 
-
 #--- BACKGROUND ---#
 # Background
 BGx = 0
@@ -407,29 +384,9 @@ def reinitialiseBG():
 
 #--- END BACKGROUND ---#
 
-
-#--- ENEMIES ---#
-
-enemies = []
-
-def createEnemy(ship):
-    return {
-        'ship' : ship,
-    }
-
-def getEnemyShip(Enemy):
-    return Enemy['ship']
-
-def setShip(Enemy, newShip):
-    Enemy['ship'] = newShip
-
-def addEnemy(enemy):
-    enemies.append(enemy)
-        
-def destroyEnemy(index):
-    enemies.pop(index)
-
 def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
+    #print("hello"); 
+    #print(entity)
     if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
 
@@ -453,11 +410,50 @@ def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
         d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
         entity['ship']['entity']['direction'] = returnUnitVector(d)
         
+
     shipMove(entity['ship'])
 
+def mapToNewBoundaries(n, a, b, c, d):
+
+
+    b -= a
+    a = 0
+
+    ctemp = c
+    d -= c
+    c = 0
+
+    ratio = d/b
+    n = (n*ratio) + ctemp
+
+    return n
+    
 def moveAllEnnemies():
     for e in  enemies:
         moveOneEnemy(e)
+
+def returnUnitVector(angle):
+    return (math.cos(angle), math.sin(angle))
+
+#--- ENEMIES ---#
+enemies = []
+
+def createEnemy(ship):
+    return {
+        'ship' : ship,
+    }
+
+def getEnemyShip(Enemy):
+    return Enemy['ship']
+
+def setShip(Enemy, newShip):
+    Enemy['ship'] = newShip
+
+def addEnemy(enemy):
+    enemies.append(enemy)
+        
+def destroyEnemy(index):
+    enemies.pop(index)
 
 def displayEnemies():
     for enemy in enemies:
@@ -465,9 +461,7 @@ def displayEnemies():
 
 #--- END ENNEMIES ---#
 
-
 #--- PLAYER ---#
-
 def createPlayer(ship):
     return{
         'ship' : ship,
@@ -498,9 +492,13 @@ def inputPlayerStopShoot(Player):
 def getPlayerShip(Player):
     return Player['ship']
 
-#--- END PLAYER ---#
 
-#--- COLLISION ---#
+# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
+def removeFromList(list, indexesToRemove):
+    for i in range(len(indexesToRemove)):
+        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
+
+#--- Collisions
 
 # Return True if collision occurs, False otherway
 def collision_entite(entite1, entite2):
@@ -553,28 +551,10 @@ def destroyProjOutBound():
 #--- END PROJECTILE ---#
 
 #--- Control ---#
-
 spawner = []
 spawnController = 0
 oldTime = 0
 deltaTime = 0
-
-def createSpawnController():
-    return{
-        'spawnIndex' : 0,
-        'waveIndex'  : 0,
-        'spawner' : [],
-        'timeElapsed': 0
-    } 
-    
-def createSpawner(t, w, x, y, s):
-    return{
-        'type'   : w,
-        'timer'  : t,
-        'x'      : x,
-        'y'      : y,
-        'speed'  : s
-    }
 
 def control():
     global spawnController, oldTime, deltaTime
@@ -584,7 +564,7 @@ def control():
         spawnController = createSpawnController()
         # allWaveData [Vague][type de données][index 
         for w in range(len(allWaveData)):
-            spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3], allWaveData[w][4])
+            spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3], allWaveData[w][4], allWaveData[w][5])
             spawnController['spawner'].append(spawner)
     # jusqu'ici je pense
 
@@ -599,7 +579,9 @@ def control():
                                                             spawnController['spawner'][wi]['speed'][i], 
                                                             spawnController['spawner'][wi]['type'][i] 
                                                             )))
-            setAnimation(getShipEntity(getEnemyShip(newEnemy)), 'enemy1_base', 1)
+
+            print(" skin :   " + spawnController['spawner'][wi]['skin'][i])
+            setAnimation(getShipEntity(getEnemyShip(newEnemy)), spawnController['spawner'][wi]['skin'][i], 1)
             addEnemy(newEnemy)  
                                 #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
             spawnController['timeElapsed'] = 0
@@ -615,8 +597,6 @@ def control():
     oldTime   = pygame.time.get_ticks()
     spawnController['timeElapsed'] +=  deltaTime
 
-
-#--- PLAYER AND INPUT ---#
     
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE, 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
@@ -662,33 +642,30 @@ def inputManager(event):
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
 
-#--- END PLAYER AND INPUT ---#
-
-
-#--- SCORE ---#
-score = 0
+# Score
 
 def displayScore():
-    displayMessage(SCORE_FONT, "Score: " + str(score), WHITE, (0,0))
+    displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
 
 def displayMessage(font, string, color, position):
     message = font.render(string, True, color)
     window.blit(message, position)
 
-#--- MENU ---#
+# Menu
 
 def displayMenu():
-    displayMessage(SCORE_FONT, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
-    displayMessage(MENU_FONT, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
-
-#=---- END FUNCTION AND OBJECT DEFINITIONS ----=#
-#      ===================================
+    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
+    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
 
 
-#=---- MAIM LOOP---=#
-#      =========
+# ----- End function definition
 
 temps = pygame.time.Clock()
+    
+scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
+menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
+
+
 while not finished:
 
     for event in pygame.event.get():
@@ -703,6 +680,7 @@ while not finished:
     pygame.display.flip()
 
     while playing:
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                    finished = True
@@ -711,8 +689,12 @@ while not finished:
             else:
               inputManager(event)
 
-        # display background
+
+        # erase
+        #window.fill(BLACK)
         BG()
+        
+        
         
         # actions
         control()
@@ -732,7 +714,7 @@ while not finished:
         displayScore()
         pygame.display.flip()
 
-        temps.tick(REFRESH_RATE)
+        temps.tick(60)
 
 pygame.display.quit()
 pygame.quit()
