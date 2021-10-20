@@ -30,11 +30,6 @@ MUSIC_PATH = 'sounds/musics/'
 # definition of colors
 BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
 
-# booleans
-
-finished   = False; 
-playing = False
-
 # player 1 parameters
 PLAYER1_SHIP_SIZE  = 80
 PLAYER1_SHIP_SPEED = 10
@@ -49,7 +44,7 @@ PROJECTILE_SIZE    = 3
 projectiles = []
 
 #Ennemies
-ENEMY_SIZE = 200
+ENEMY_SIZE = [125, 200]
 
 # Background
 BACKGROUND_SPEED = 10
@@ -58,10 +53,10 @@ BACKGROUND_SPEED = 10
 #Animation and Images to load in bank
 ANIMATIONS_TO_LOAD = {
 # format:
-#   'name'            : (nImages, 'ext', size                                         ),
-    'player1_base'    : (10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE]       ),
-    'enemy1_base'     : (10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]                     ),
-    'skinA'           : (19     , 'png', [400, 400]                                   ),
+#   'name'            : (nImages, 'ext', size                     ),
+    'player1_base'    : (10     , 'png', [80, 80]                 ),
+    'enemy1_base'     : (10     , 'png', [80, 80]                 ),
+    'skinA'           : (19     , 'png', [123, 194]               ),
 }
 IMAGES_TO_LOAD = {
 # format:
@@ -563,7 +558,7 @@ def control():
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
             wi = spawnController['waveIndex']; i = spawnController['spawnIndex']
 
-            newEnemy = createEnemy(createShip(createEntity( ENEMY_SIZE//2, ENEMY_SIZE, 
+            newEnemy = createEnemy(createShip(createEntity( ENEMY_SIZE[X], ENEMY_SIZE[Y], 
                                                             spawnController['spawner'][wi]['x'][i], 
                                                             spawnController['spawner'][wi]['y'][i],
                                                             spawnController['spawner'][wi]['speed'][i], 
@@ -654,6 +649,9 @@ temps = pygame.time.Clock()
 scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
+
+finished   = False
+playing = False
 
 while not finished:
 
