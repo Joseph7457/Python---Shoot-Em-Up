@@ -208,9 +208,6 @@ def getAnimationFrame(animationName, frame):
         return ImageBank['fixed']['missing']
 
 def getLenAnimation(animationName):
-    print(ImageBank['animated'].keys())
-    print(animationName)
-    print(animationName in ImageBank['animated'])
     if animationName in ImageBank['animated']:
         return len(ImageBank['animated'][animationName])
     else:
