@@ -71,9 +71,6 @@ IMAGES_TO_LOAD = {
     'backGround_2'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
 }
 
-#Score
-score = 0
-
 # Definition of every wave
 
 def setAllWave():
@@ -123,29 +120,24 @@ def normalize2dVector(x, y):
     module = math.sqrt(x**2+y**2)
     return (x/module, y/module)
 
-def loadify(img):
-    return pygame.image.load(img).convert_alpha()
+# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
+def removeFromList(list, indexesToRemove):
+    for i in range(len(indexesToRemove)):
+        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
 
-def createSpawnController():
-    return{
-        'spawnIndex' : 0,
-        'waveIndex'  : 0,
-        'spawner' : [],
-        'timeElapsed': 0
-    } 
+def mapToNewBoundaries(n, a, b, c, d):
+    b -= a
+    a = 0
+
+    ctemp = c
+    d -= c
+    c = 0
+
+    ratio = d/b
+    n = (n*ratio) + ctemp
+
+    return n
     
-
-def createSpawner(t, w, x, y, s, skin):
-    return{
-        'type'   : w,
-        'timer'  : t,
-        'x'      : x,
-        'y'      : y,
-        'speed'  : s,
-        'skin'   : skin
-    }
-
-
 #--- IMAGE BANK ---#
 
 ImageBank = {
@@ -168,7 +160,6 @@ def getFixedImage(imageName):
 def addAnimationToBank(animationName, nImages, ext, imageScale):
     ImageBank['animated'][animationName] = []
     for i in range(nImages):
-        print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
         image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
         ImageBank['animated'][animationName].append(pygame.transform.scale(image, (imageScale[X], imageScale[Y])))
 
@@ -179,9 +170,6 @@ def getAnimationFrame(animationName, frame):
         return ImageBank['fixed']['missing_texture']
 
 def getLenAnimation(animationName):
-    print(ImageBank['animated'].keys())
-    print(animationName)
-    print(animationName in ImageBank['animated'])
     if animationName in ImageBank['animated']:
         return len(ImageBank['animated'][animationName])
     else:
@@ -208,11 +196,6 @@ def createAnimation(animationName, animationSpeed):
     }
 
 def getNextAnimationFrame(animation):
-
-    print("bonsoir")
-    print("animName = " +animation['animationName'])
-
-    print("longueur = "); print(getLenAnimation(animation['animationName']))
     animation['indexCurrImage'] = (animation['indexCurrImage'] + 1) % getLenAnimation(animation['animationName'])
     animation['timeSinceLastAnim'] = pygame.time.get_ticks()
     return getAnimationFrame(animation['animationName'], animation['indexCurrImage'])
@@ -233,7 +216,8 @@ def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
         'size': [width, height],
         'currImage' : getFixedImage('missing_texture'),
         'isAnimated' : False,
-        'animation' : None,
+        'animations' : {},
+        'currAnimation' : None,
         'moveType' : mT # ref to function controlling direction and speed of entity
     }
 
@@ -266,12 +250,22 @@ def setSize(entity, x, y):
     entity['size'][X] = x
     entity['size'][Y] = y
 
-def setAnimation(entity, animationName, animationSpeed):
+def addEntityAnimation(entity, animationName, animationRef, animationSpeed):
     entity['isAnimated'] = True
-    entity['animation'] = createAnimation(animationName, animationSpeed)
+    if not entity['animations']:
+        entity['currAnimation'] = animationName
+    entity['animations'][animationName] = createAnimation(animationRef, animationSpeed)
 
+def animateEntity(entity):
+    entity['isAnimated'] = True
 
+def inanimateEntity(entity):
+    entity['isAnimated'] = False
 
+def switchEntityAnimation(entity, animationName):
+    if entity['animations']:
+        if animationName in entity['animations']:
+            entity['currAnimation'] = animationName
 
     #Method
 def move(entity):
@@ -280,8 +274,8 @@ def move(entity):
 
 def displayEntity(entity, currTime):
     if entity['isAnimated']:
-        if shouldAnimate(entity['animation'], currTime):
-            entity['currImage'] = getNextAnimationFrame(entity['animation'])
+        if shouldAnimate(entity['animations'][entity['currAnimation']], currTime):
+            entity['currImage'] = getNextAnimationFrame(entity['animations'][entity['currAnimation']])
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
 #--- END ENTITY ---#
@@ -385,8 +379,6 @@ def reinitialiseBG():
 #--- END BACKGROUND ---#
 
 def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
-    #print("hello"); 
-    #print(entity)
     if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
 
@@ -413,21 +405,6 @@ def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
 
     shipMove(entity['ship'])
 
-def mapToNewBoundaries(n, a, b, c, d):
-
-
-    b -= a
-    a = 0
-
-    ctemp = c
-    d -= c
-    c = 0
-
-    ratio = d/b
-    n = (n*ratio) + ctemp
-
-    return n
-    
 def moveAllEnnemies():
     for e in  enemies:
         moveOneEnemy(e)
@@ -492,12 +469,6 @@ def inputPlayerStopShoot(Player):
 def getPlayerShip(Player):
     return Player['ship']
 
-
-# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
-def removeFromList(list, indexesToRemove):
-    for i in range(len(indexesToRemove)):
-        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
-
 #--- Collisions
 
 # Return True if collision occurs, False otherway
@@ -556,6 +527,24 @@ spawnController = 0
 oldTime = 0
 deltaTime = 0
 
+def createSpawnController():
+    return{
+        'spawnIndex' : 0,
+        'waveIndex'  : 0,
+        'spawner' : [],
+        'timeElapsed': 0
+    } 
+
+def createSpawner(t, w, x, y, s, skin):
+    return{
+        'type'   : w,
+        'timer'  : t,
+        'x'      : x,
+        'y'      : y,
+        'speed'  : s,
+        'skin'   : skin
+    }
+
 def control():
     global spawnController, oldTime, deltaTime
 
@@ -580,8 +569,7 @@ def control():
                                                             spawnController['spawner'][wi]['type'][i] 
                                                             )))
 
-            print(" skin :   " + spawnController['spawner'][wi]['skin'][i])
-            setAnimation(getShipEntity(getEnemyShip(newEnemy)), spawnController['spawner'][wi]['skin'][i], 1)
+            addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)
             addEnemy(newEnemy)  
                                 #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
             spawnController['timeElapsed'] = 0
@@ -602,7 +590,7 @@ Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_S
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED),
                                   PLAYER1_WEAPON_COOLDOWN, 0, 1, False))
-setAnimation(getShipEntity(getPlayerShip(Player1)), 'player1_base', 0.4)
+addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'Skin_Base', 'player1_base', 0.4)
 
 
 def inputManager(event):
@@ -643,7 +631,7 @@ def inputManager(event):
             inputPlayerStopShoot(Player1)
 
 # Score
-
+score = 0
 def displayScore():
     displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
 
