@@ -12,24 +12,39 @@ Pas de problèmes pour les autres combos de touche.
 Bug from pygame -> unsolvable
 """
 
-# --- To make code more readable
+#--- To make code more readable
+def loadify(img):
+    return pygame.image.load(img).convert_alpha()
 X = 0; Y = 1
+
+#=---- CONSTANT DECLARATION ----=#
+#      ====================
 
 # window size
 WINDOW_SIZE = [1600, 900]
 REFRESH_RATE = 60
 
-#paths
+# definition of colors
+BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
+
+#--- INIT PYGAME ---#
+pygame.init()
+window = pygame.display.set_mode(WINDOW_SIZE)
+window.fill(BLACK)
+#--- END INIT PYGAME ---#
+
+# paths
 ANIMATION_PATH = 'sprites/animations/'
 IMAGES_PATH = 'sprites/images/'
 SOUND_EFFECT_PATH = 'sounds/soundEffects/'
 MUSIC_PATH = 'sounds/musics/'
 
-# definition of colors
-BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
+# fonts
+SCORE_FONT = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
+MENU_FONT = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
+
 
 # booleans
-
 finished   = False; 
 playing = False
 
@@ -40,25 +55,17 @@ PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 
-#Projectiles
+# Projectiles
 PROJECTILE_SPEED   = 20
 projectiles_axe    = 1
 PROJECTILE_SIZE    = 3
 projectiles = []
 
-#Ennemies
+# Ennemies
 ENEMY_SIZE = 80
 
-#Spawner
-spawner = []
 
-#spawnController
-spawnController = 0
-oldTime = 0
-deltaTime = 0
-
-
-# ANIMATION
+# ANIMATIONS
     # format:              ('name'          , nImages, 'ext', size                                  )
 PLAYER1_SHIP_ANIMATION =   ('player1_base'  , 10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE])
 ENEMY1_SHIP_ANIMATION  =   ('enemy1_base'   , 10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]              )
@@ -68,17 +75,11 @@ MISSING_IMAGE          =   ('missing'       , 'jpeg', [100, 100]                
 
 
 # Background Image
-
-BGImg = 0
+BGImg = [loadify(IMAGES_PATH +'screen-0183.tif'), loadify(IMAGES_PATH + 'screen-0817.tif')]
 BGx = 0
 BGy = [0, -WINDOW_SIZE[1]]
 
-
-#Score
-score = 0
-
 # Definition of every wave
-
 def setAllWave():
 
     allWaveData = []
@@ -133,19 +134,14 @@ def setAllWave():
     oneWaveData   = []
     oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s) 
     allWaveData.append(oneWaveData)
-    
-    #print(allWaveData)
 
     return allWaveData
 
 allWaveData = setAllWave()
 
 
-pygame.init()
-window = pygame.display.set_mode(WINDOW_SIZE)
-window.fill(BLACK)
-
-
+#=---- FUNCTION AND OBJECT DEFINITIONS ----=#
+#      ===============================   
 
 #--- utility function ---#
 def normalize2dVector(x, y):
@@ -154,36 +150,38 @@ def normalize2dVector(x, y):
     module = math.sqrt(x**2+y**2)
     return (x/module, y/module)
 
-def loadify(img):
-    return pygame.image.load(img).convert_alpha()
+def returnUnitVector(angle):
+    return (math.cos(angle), math.sin(angle))
 
-def createSpawnController():
-    return{
-        'spawnIndex' : 0,
-        'waveIndex'  : 0,
-        'spawner' : [],
-        'timeElapsed': 0
-    } 
-    
+# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
+def removeFromList(list, indexesToRemove):
+    for i in range(len(indexesToRemove)):
+        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
 
-def createSpawner(t, w, x, y, s):
-    return{
-        'type'   : w,
-        'timer'  : t,
-        'x'      : x,
-        'y'      : y,
-        'speed'  : s
-    }
 
+def mapToNewBoundaries(n, a, b, c, d):
+    b -= a
+    a = 0
+
+    ctemp = c
+    d -= c
+    c = 0
+
+    ratio = d/b
+
+    return (n*ratio) + ctemp
+
+#--- END UTILITY FUNCTIOM ---#
 
 #--- IMAGE BANK ---#
 
+# The bank stores all the necessary images for the good functionning of the code
 ImageBank = {
     'fixed': {},
     'animated' : {},
 }
 
-# fixed images follows this format : sprite/Images/imageName.ext
+# fixed images location follows this format : sprite/Images/imageName.ext
 def addFixedImageToBank(imageName, ext, imageScale = [50, 50]):
     image = pygame.image.load(IMAGES_PATH + imageName + '.' + ext).convert_alpha(window)
     ImageBank['fixed'][imageName] = pygame.transform.scale(image, (imageScale[X], imageScale[Y]))
@@ -194,7 +192,7 @@ def getFixedImage(imageName):
     else:
         return ImageBank['fixed']['missing']
 
-# animations follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
+# animations location follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
 def addAnimationToBank(animationName, nImages, ext, imageScale):
     ImageBank['animated'][animationName] = []
     for i in range(nImages):
@@ -221,12 +219,12 @@ addAnimationToBank(*ENEMY1_SHIP_ANIMATION)
     # fixed images
 addFixedImageToBank(*MISSING_IMAGE)
 
-
-
 #--- END IMAGE BANK ---#
+
 
 #--- AMIMATIONS ---#
 
+# create a new animation based on one stored in the image bank
 def createAnimation(animationName, animationSpeed):
     return{
         'animationName' : animationName,
@@ -240,10 +238,11 @@ def getNextAnimationFrame(animation):
     animation['timeSinceLastAnim'] = pygame.time.get_ticks()
     return getAnimationFrame(animation['animationName'], animation['indexCurrImage'])
 
-def shouldAnimate(animation, currTime):
+def canAnimate(animation, currTime):
     return animation['timeSinceLastAnim'] + animation['frameDuration'] < currTime
 
 #--- END ANIMATION ---#
+
 
 #--- ENTITY ---#
 
@@ -300,7 +299,7 @@ def move(entity):
 
 def displayEntity(entity, currTime):
     if entity['isAnimated']:
-        if shouldAnimate(entity['animation'], currTime):
+        if canAnimate(entity['animation'], currTime):
             entity['currImage'] = getNextAnimationFrame(entity['animation'])
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
@@ -376,6 +375,7 @@ def shipMove(Ship):
 
 #--- END SHIPS ---#
 
+
 #--- BACKGROUND ---#
 
 BACKGROUNDSPEED = 10
@@ -403,9 +403,29 @@ def reinitialiseBG():
 
 #--- END BACKGROUND ---#
 
+
+#--- ENEMIES ---#
+
+enemies = []
+
+def createEnemy(ship):
+    return {
+        'ship' : ship,
+    }
+
+def getEnemyShip(Enemy):
+    return Enemy['ship']
+
+def setShip(Enemy, newShip):
+    Enemy['ship'] = newShip
+
+def addEnemy(enemy):
+    enemies.append(enemy)
+        
+def destroyEnemy(index):
+    enemies.pop(index)
+
 def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
-    #print("hello"); 
-    #print(entity)
     if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
         entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
 
@@ -429,50 +449,11 @@ def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
         d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
         entity['ship']['entity']['direction'] = returnUnitVector(d)
         
-
     shipMove(entity['ship'])
 
-def mapToNewBoundaries(n, a, b, c, d):
-
-
-    b -= a
-    a = 0
-
-    ctemp = c
-    d -= c
-    c = 0
-
-    ratio = d/b
-    n = (n*ratio) + ctemp
-
-    return n
-    
 def moveAllEnnemies():
     for e in  enemies:
         moveOneEnemy(e)
-
-def returnUnitVector(angle):
-    return (math.cos(angle), math.sin(angle))
-
-#--- ENEMIES ---#
-enemies = []
-
-def createEnemy(ship):
-    return {
-        'ship' : ship,
-    }
-
-def getEnemyShip(Enemy):
-    return Enemy['ship']
-
-def setShip(Enemy, newShip):
-    Enemy['ship'] = newShip
-
-def addEnemy(enemy):
-    enemies.append(enemy)
-        
-def destroyEnemy(index):
-    enemies.pop(index)
 
 def displayEnemies():
     for enemy in enemies:
@@ -480,7 +461,9 @@ def displayEnemies():
 
 #--- END ENNEMIES ---#
 
+
 #--- PLAYER ---#
+
 def createPlayer(ship):
     return{
         'ship' : ship,
@@ -511,13 +494,9 @@ def inputPlayerStopShoot(Player):
 def getPlayerShip(Player):
     return Player['ship']
 
+#--- ENDS PLAYER ---#
 
-# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
-def removeFromList(list, indexesToRemove):
-    for i in range(len(indexesToRemove)):
-        list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
-
-#--- Collisions
+#--- COLLISION ---#
 
 # Return True if collision occurs, False otherway
 def collision_entite(entite1, entite2):
@@ -569,8 +548,29 @@ def destroyProjOutBound():
 
 #--- END PROJECTILE ---#
 
-#--- Control
+#--- Control ---#
 
+spawner = []
+spawnController = 0
+oldTime = 0
+deltaTime = 0
+
+def createSpawnController():
+    return{
+        'spawnIndex' : 0,
+        'waveIndex'  : 0,
+        'spawner' : [],
+        'timeElapsed': 0
+    } 
+    
+def createSpawner(t, w, x, y, s):
+    return{
+        'type'   : w,
+        'timer'  : t,
+        'x'      : x,
+        'y'      : y,
+        'speed'  : s
+    }
 
 def control():
     global spawnController, oldTime, deltaTime
@@ -610,6 +610,9 @@ def control():
     deltaTime = pygame.time.get_ticks()-oldTime
     oldTime   = pygame.time.get_ticks()
     spawnController['timeElapsed'] +=  deltaTime
+
+
+#--- PLAYER AND INPUT ---#
     
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE, 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
@@ -655,34 +658,33 @@ def inputManager(event):
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
 
-# Score
+#--- END PLAYER AND INPUT ---#
+
+
+#--- SCORE ---#
+score = 0
 
 def displayScore():
-    displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
+    displayMessage(SCORE_FONT, "Score: " + str(score), WHITE, (0,0))
 
 def displayMessage(font, string, color, position):
     message = font.render(string, True, color)
     window.blit(message, position)
 
-# Menu
+#--- MENU ---#
 
 def displayMenu():
-    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
-    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
+    displayMessage(SCORE_FONT, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
+    displayMessage(MENU_FONT, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
+
+#=---- END FUNCTION AND OBJECT DEFINITIONS ----=#
+#      ===================================
 
 
-# ----- End function definition
+#=---- MAIM LOOP---=#
+#      =========
 
 temps = pygame.time.Clock()
-    
-scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
-menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
-
-# BG IMG
-BGImg = [loadify(IMAGES_PATH +'screen-0183.tif'), loadify(IMAGES_PATH + 'screen-0817.tif')]
-
-
-
 while not finished:
 
     for event in pygame.event.get():
@@ -697,7 +699,6 @@ while not finished:
     pygame.display.flip()
 
     while playing:
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                    finished = True
@@ -706,12 +707,8 @@ while not finished:
             else:
               inputManager(event)
 
-
-        # erase
-        #window.fill(BLACK)
+        # display background
         BG()
-        
-        
         
         # actions
         control()
@@ -731,7 +728,7 @@ while not finished:
         displayScore()
         pygame.display.flip()
 
-        temps.tick(60)
+        temps.tick(REFRESH_RATE)
 
 pygame.display.quit()
 pygame.quit()
