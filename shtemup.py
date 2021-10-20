@@ -1,24 +1,11 @@
-
-
 import pygame
 import math
 
-
-
 """
-PS: BUG DE L ECRAN D ACCUEIL
-SI VOUS APPUYEZ SUR ESPACE, NO PROBLEM
-MAIS SI VOUS APPUYEZ SUR UNE DIRECTION, ELLE RESTE ENFONCEE POUR LA GAME
-"""
-
-"""
-BUG 2 :
+BUG 1:
 La diagonale gauche ne marche pas lorsqu'on maintient espace enfoncé. 
 Pas de problèmes pour les autres combos de touche.
-"""
-
-"""
-Le tir est inversé si on appuye sur CTRL
+Bug from pygame -> unsolvable
 """
 
 # --- To make code more readable
@@ -56,7 +43,7 @@ PROJECTILE_SIZE    = 3
 projectiles = []
 
 #Ennemies
-ENNEMY_SIZE = 80
+ENEMY_SIZE = 80
 
 #Spawner
 spawner = []
@@ -66,8 +53,16 @@ spawnController = 0
 oldTime = 0
 deltaTime = 0
 
-def loadify(img):
-    return pygame.image.load(img).convert_alpha()
+
+# ANIMATION
+    # format:              ('name'          , nImages, 'ext', size                                  )
+PLAYER1_SHIP_ANIMATION =   ('player1_base'  , 10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE])
+ENEMY1_SHIP_ANIMATION  =   ('enemy1_base'   , 10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]              )
+    # /!\ donn't forget to add them to the image bank before main loop
+# FIXED IMAGES
+MISSING_IMAGE          =   ('missing'       , 'jpeg', [100, 100]                  )
+
+
 # Background Image
 
 BGImg = 0
@@ -155,6 +150,8 @@ def normalize2dVector(x, y):
     module = math.sqrt(x**2+y**2)
     return (x/module, y/module)
 
+def loadify(img):
+    return pygame.image.load(img).convert_alpha()
 
 def createSpawnController():
     return{
@@ -175,6 +172,80 @@ def createSpawner(t, w, x, y, s):
     }
 
 
+#--- IMAGE BANK ---#
+
+ImageBank = {
+    'fixed': {},
+    'animated' : {},
+}
+
+# fixed images follows this format : sprite/Images/imageName.ext
+def addFixedImageToBank(imageName, ext, imageScale = [50, 50]):
+    image = pygame.image.load(IMAGES_PATH + imageName + '.' + ext).convert_alpha(window)
+    ImageBank['fixed'][imageName] = pygame.transform.scale(image, (imageScale[X], imageScale[Y]))
+
+def getFixedImage(imageName):
+    if imageName in ImageBank['fixed']:
+        return ImageBank['fixed'][imageName]
+    else:
+        return ImageBank['fixed']['missing']
+
+# animations follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
+def addAnimationToBank(animationName, nImages, ext, imageScale):
+    ImageBank['animated'][animationName] = []
+    for i in range(nImages):
+        image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
+        ImageBank['animated'][animationName].append(pygame.transform.scale(image, (imageScale[X], imageScale[Y])))
+
+def getAnimationFrame(animationName, frame):
+    if animationName in ImageBank['animated'] and frame < len(ImageBank['animated'][animationName]):
+        return ImageBank['animated'][animationName][frame]
+    else:
+        return ImageBank['fixed']['missing']
+
+def getLenAnimation(animationName):
+    print(ImageBank['animated'].keys())
+    print(animationName)
+    print(animationName in ImageBank['animated'])
+    if animationName in ImageBank['animated']:
+        return len(ImageBank['animated'][animationName])
+    else:
+        return 0
+
+
+# adding to the bank
+    #animation
+addAnimationToBank(*PLAYER1_SHIP_ANIMATION)
+addAnimationToBank(*ENEMY1_SHIP_ANIMATION)
+    # fixed images
+addFixedImageToBank(*MISSING_IMAGE)
+
+
+
+#--- END IMAGE BANK ---#
+
+#--- AMIMATIONS ---#
+
+def createAnimation(animationName, animationSpeed):
+    return{
+        'animationName' : animationName,
+        'frameDuration' : animationSpeed * REFRESH_RATE,
+        'timeSinceLastAnim' : 0,
+        'indexCurrImage': 0,
+    }
+
+def getNextAnimationFrame(animation):
+    animation['indexCurrImage'] = (animation['indexCurrImage'] + 1) % getLenAnimation(animation['animationName'])
+    animation['timeSinceLastAnim'] = pygame.time.get_ticks()
+    return getAnimationFrame(animation['animationName'], animation['indexCurrImage'])
+
+def shouldAnimate(animation, currTime):
+    return animation['timeSinceLastAnim'] + animation['frameDuration'] < currTime
+
+#--- END ANIMATION ---#
+
+#--- ENTITY ---#
+
 def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
     return {
         'position': [x, y],
@@ -182,6 +253,9 @@ def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
         'direction': [0,0], # normalized
         'speed': speed,
         'size': [width, height],
+        'currImage' : getFixedImage('missing'),
+        'isAnimated' : False,
+        'animation' : None,
         'moveType' : mT # ref to function controlling direction and speed of entity
     }
 
@@ -214,10 +288,20 @@ def setSize(entity, x, y):
     entity['size'][X] = x
     entity['size'][Y] = y
 
+def setAnimation(entity, animationName, animationSpeed):
+    entity['isAnimated'] = True
+    entity['animation'] = createAnimation(animationName, animationSpeed)
+
     #Method
 def move(entity):
     entity['position'][X] += entity['direction'][X] * entity['speed']
     entity['position'][Y] += entity['direction'][Y] * entity['speed']
+
+def displayEntity(entity, currTime):
+    if entity['isAnimated']:
+        if shouldAnimate(entity['animation'], currTime):
+            entity['currImage'] = getNextAnimationFrame(entity['animation'])
+    window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
 #--- END ENTITY ---#
 
@@ -269,11 +353,8 @@ def startShipShooting(Ship):
     Ship['isShooting'] = True
 
     # Methods
-def displayShip(Ship, color):
-    pygame.draw.circle(window, color, 
-                       (int(getPos(getShipEntity(Ship))[X] + getSize(getShipEntity(Ship))[X]//2),
-                        int(getPos(getShipEntity(Ship))[Y] + getSize(getShipEntity(Ship))[Y]//2)),
-                       getSize(getShipEntity(Ship))[X]//2)
+def displayShip(Ship):
+    displayEntity(getShipEntity(Ship), pygame.time.get_ticks())
 
 def shipShoot(Ship):
     if((isShipShooting(Ship)) and (pygame.time.get_ticks() - getShipTimeLastShot(Ship) >= getShipShootingCooldown(Ship))):
@@ -394,7 +475,7 @@ def destroyEnemy(index):
 
 def displayEnemies():
     for enemy in enemies:
-        displayShip(getEnemyShip(enemy), WHITE)
+        displayShip(getEnemyShip(enemy))
 
 #--- END ENNEMIES ---#
 
@@ -507,16 +588,14 @@ def control():
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
             wi = spawnController['waveIndex']; i = spawnController['spawnIndex']
 
-            addEnemy(
-            createEnemy(
-                createShip(
-                    createEntity(50, 50, 
-                                spawnController['spawner'][wi]['x'][i], 
-                                spawnController['spawner'][wi]['y'][i],
-                                spawnController['spawner'][wi]['speed'][i], 
-                                spawnController['spawner'][wi]['type'][i] 
-                                )))) 
-                                
+            newEnemy = createEnemy(createShip(createEntity( 50, 50, 
+                                                            spawnController['spawner'][wi]['x'][i], 
+                                                            spawnController['spawner'][wi]['y'][i],
+                                                            spawnController['spawner'][wi]['speed'][i], 
+                                                            spawnController['spawner'][wi]['type'][i] 
+                                                            )))
+            setAnimation(getShipEntity(getEnemyShip(newEnemy)), ENEMY1_SHIP_ANIMATION[0], 1)
+            addEnemy(newEnemy)  
                                 #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
             spawnController['timeElapsed'] = 0
             spawnController['spawnIndex'] += 1
@@ -531,13 +610,12 @@ def control():
     oldTime   = pygame.time.get_ticks()
     spawnController['timeElapsed'] +=  deltaTime
     
-    return
-
-
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE, 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED),
                                   PLAYER1_WEAPON_COOLDOWN, 0, 1, False))
+setAnimation(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_ANIMATION[0], 0.4)
+
 
 def inputManager(event):
     global Player1, finished, playing, projectiles_axe 
@@ -647,7 +725,7 @@ while not finished:
         
         # display
         displayEnemies()
-        displayShip(getPlayerShip(Player1), WHITE)
+        displayShip(getPlayerShip(Player1))
         displayProjectile()
         displayScore()
         pygame.display.flip()
