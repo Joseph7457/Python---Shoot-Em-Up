@@ -66,7 +66,7 @@ ANIMATIONS_TO_LOAD = {
 IMAGES_TO_LOAD = {
 # format:
 #   'name'            : (ext   , [sizeX, sizeY]                   ),
-    'missing_texture' : ('jpeg', [100, 100]                       ),
+    'missing_texture' : ('jpeg', [400, 400]                       ),
     'backGround_1'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
     'backGround_2'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
 }
@@ -214,7 +214,7 @@ def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
         'direction': [0,0], # normalized
         'speed': speed,
         'size': [width, height],
-        'currImage' : getFixedImage('missing_texture'),
+        'currImage' : pygame.transform.scale(getFixedImage('missing_texture'), (width, height)),
         'isAnimated' : False,
         'animations' : {},
         'currAnimation' : None,
@@ -246,9 +246,10 @@ def setPosition(entity, coords):
     entity['position'][X] = coords[X]
     entity['position'][Y] = coords[Y]
 
-def setSize(entity, x, y):
+def resizeEntity(entity, x, y):
     entity['size'][X] = x
     entity['size'][Y] = y
+    entity['currImage'] = pygame.transform.scale(entity['currImage'], (x, y))
 
 def addEntityAnimation(entity, animationName, animationRef, animationSpeed):
     entity['isAnimated'] = True
@@ -275,7 +276,7 @@ def move(entity):
 def displayEntity(entity, currTime):
     if entity['isAnimated']:
         if shouldAnimate(entity['animations'][entity['currAnimation']], currTime):
-            entity['currImage'] = getNextAnimationFrame(entity['animations'][entity['currAnimation']])
+            entity['currImage'] = pygame.transform.scale(getNextAnimationFrame(entity['animations'][entity['currAnimation']]), entity['size'])
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
 #--- END ENTITY ---#
