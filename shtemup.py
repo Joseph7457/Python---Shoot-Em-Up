@@ -1,3 +1,7 @@
+"""
+https://trello.com/b/1NyyOuI3/shootem-up
+"""
+
 import pygame
 import math
 
