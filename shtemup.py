@@ -28,6 +28,12 @@ X = 0; Y = 1
 WINDOW_SIZE = [1600, 900]
 REFRESH_RATE = 60
 
+#paths
+ANIMATION_PATH = 'sprites/animations/'
+IMAGES_PATH = 'sprites/images/'
+SOUND_EFFECT_PATH = 'sounds/soundEffects/'
+MUSIC_PATH = 'sounds/musics/'
+
 # definition of colors
 BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
 
@@ -134,11 +140,6 @@ def setAllWave():
     return allWaveData
 
 allWaveData = setAllWave()
-
-
-
-
-
 
 
 pygame.init()
@@ -291,6 +292,9 @@ def shipShoot(Ship):
 def shipMove(Ship):
     move(Ship['entity'])
 
+#--- END SHIPS ---#
+
+#--- BACKGROUND ---#
 
 BACKGROUNDSPEED = 10
 
@@ -315,8 +319,7 @@ def reinitialiseBG():
     if(BGy[1]>WINDOW_SIZE[1]):
         BGy[1] = - WINDOW_SIZE[1]
 
-#--- END SHIPS ---#
-
+#--- END BACKGROUND ---#
 
 def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
     #print("hello"); 
@@ -499,7 +502,6 @@ def control():
             spawnController['spawner'].append(spawner)
     # jusqu'ici je pense
 
-    print(len (spawnController['spawner']))
     if (len (spawnController['spawner']) > 0):
     
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
@@ -598,7 +600,7 @@ scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
 # BG IMG
-BGImg = [loadify('screen-0183.tif'), loadify('screen-0817.tif')]
+BGImg = [loadify(IMAGES_PATH +'screen-0183.tif'), loadify(IMAGES_PATH + 'screen-0817.tif')]
 
 
 
@@ -639,9 +641,6 @@ while not finished:
         
         shipShoot(getPlayerShip(Player1))
         movePlayer(Player1)
-        
-        print(Player1['horizontalInput'])
-        print(Player1['verticalInput'])
 
         moveAllEnnemies()
         collisionProjectilePlayersEnnemies()
