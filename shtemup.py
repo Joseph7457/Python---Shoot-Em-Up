@@ -1,3 +1,5 @@
+
+
 import pygame
 import math
 
@@ -57,6 +59,14 @@ spawner = []
 spawnController = 0
 oldTime = 0
 deltaTime = 0
+
+def loadify(img):
+    return pygame.image.load(img).convert_alpha()
+# Background Image
+
+BGImg = 0
+BGx = 0
+BGy = [0, -WINDOW_SIZE[1]]
 
 
 #Score
@@ -134,6 +144,8 @@ allWaveData = setAllWave()
 pygame.init()
 window = pygame.display.set_mode(WINDOW_SIZE)
 window.fill(BLACK)
+
+
 
 #--- utility function ---#
 def normalize2dVector(x, y):
@@ -278,6 +290,30 @@ def shipShoot(Ship):
 
 def shipMove(Ship):
     move(Ship['entity'])
+
+
+BACKGROUNDSPEED = 10
+
+def BG():
+    moveBG()
+    reinitialiseBG()
+    displayBG()
+
+def displayBG():
+    window.blit(BGImg[0], (BGx, BGy[0]))
+    window.blit(BGImg[1], (BGx, BGy[1]))
+    
+
+def moveBG():
+    global BGy
+    BGy[0] += BACKGROUNDSPEED
+    BGy[1] += BACKGROUNDSPEED
+
+def reinitialiseBG():
+    if(BGy[0]>WINDOW_SIZE[1]):
+        BGy[0] = - WINDOW_SIZE[1]
+    if(BGy[1]>WINDOW_SIZE[1]):
+        BGy[1] = - WINDOW_SIZE[1]
 
 #--- END SHIPS ---#
 
@@ -561,6 +597,11 @@ temps = pygame.time.Clock()
 scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
+# BG IMG
+BGImg = [loadify('screen-0183.tif'), loadify('screen-0817.tif')]
+
+
+
 while not finished:
 
     for event in pygame.event.get():
@@ -586,7 +627,10 @@ while not finished:
 
 
         # erase
-        window.fill(BLACK)
+        #window.fill(BLACK)
+        BG()
+        
+        
         
         # actions
         control()
