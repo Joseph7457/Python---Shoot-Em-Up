@@ -64,20 +64,24 @@ projectiles = []
 # Ennemies
 ENEMY_SIZE = 80
 
+# Background
+BACKGROUND_SPEED = 10
 
-# ANIMATIONS
-    # format:              ('name'          , nImages, 'ext', size                                  )
-PLAYER1_SHIP_ANIMATION =   ('player1_base'  , 10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE])
-ENEMY1_SHIP_ANIMATION  =   ('enemy1_base'   , 10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]              )
-# FIXED IMAGES
-MISSING_IMAGE          =   ('missing'       , 'jpeg', [100, 100]                  )
-    # /!\ donn't forget to add them to the image bank before main loop
-    # TODO automate loading of animation/image to ImageBank
 
-# Background Image
-BGImg = [loadify(IMAGES_PATH +'screen-0183.tif'), loadify(IMAGES_PATH + 'screen-0817.tif')]
-BGx = 0
-BGy = [0, -WINDOW_SIZE[1]]
+#Animation and Images to load in bank
+ANIMATIONS_TO_LOAD = {
+# format:
+#   'name'            : (nImages, 'ext', size                                         ),
+    'player1_base'    : (10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE]       ),
+    'enemy1_base'     : (10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]                     ),
+}
+IMAGES_TO_LOAD = {
+# format:
+#   'name'            : (ext   , [sizeX, sizeY]                   ),
+    'missing_texture' : ('jpeg', [100, 100]                       ),
+    'backGround_1'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
+    'backGround_2'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
+}
 
 # Definition of every wave
 def setAllWave():
@@ -182,7 +186,7 @@ ImageBank = {
 }
 
 # fixed images location follows this format : sprite/Images/imageName.ext
-def addFixedImageToBank(imageName, ext, imageScale = [50, 50]):
+def addImageToBank(imageName, ext, imageScale = [50, 50]):
     image = pygame.image.load(IMAGES_PATH + imageName + '.' + ext).convert_alpha(window)
     ImageBank['fixed'][imageName] = pygame.transform.scale(image, (imageScale[X], imageScale[Y]))
 
@@ -190,7 +194,7 @@ def getFixedImage(imageName):
     if imageName in ImageBank['fixed']:
         return ImageBank['fixed'][imageName]
     else:
-        return ImageBank['fixed']['missing']
+        return ImageBank['fixed']['missing_texture']
 
 # animations location follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
 def addAnimationToBank(animationName, nImages, ext, imageScale):
@@ -203,7 +207,7 @@ def getAnimationFrame(animationName, frame):
     if animationName in ImageBank['animated'] and frame < len(ImageBank['animated'][animationName]):
         return ImageBank['animated'][animationName][frame]
     else:
-        return ImageBank['fixed']['missing']
+        return ImageBank['fixed']['missing_texture']
 
 def getLenAnimation(animationName):
     if animationName in ImageBank['animated']:
@@ -211,14 +215,13 @@ def getLenAnimation(animationName):
     else:
         return 0
 
+def fillImageBank():
+    for image in IMAGES_TO_LOAD:
+        addImageToBank(image, *IMAGES_TO_LOAD[image])
+    for animation in ANIMATIONS_TO_LOAD:
+        addAnimationToBank(animation, *ANIMATIONS_TO_LOAD[animation])
 
-# adding to the bank
-    #animation
-addAnimationToBank(*PLAYER1_SHIP_ANIMATION)
-addAnimationToBank(*ENEMY1_SHIP_ANIMATION)
-    # fixed images
-addFixedImageToBank(*MISSING_IMAGE)
-
+fillImageBank()
 #--- END IMAGE BANK ---#
 
 
@@ -253,7 +256,7 @@ def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
         'direction': [0,0], # normalized
         'speed': speed,
         'size': [width, height],
-        'currImage' : getFixedImage('missing'),
+        'currImage' : getFixedImage('missing_texture'),
         'isAnimated' : False,
         'animation' : None,
         'moveType' : mT # ref to function controlling direction and speed of entity
@@ -377,8 +380,9 @@ def shipMove(Ship):
 
 
 #--- BACKGROUND ---#
-
-BACKGROUNDSPEED = 10
+# Background
+BGx = 0
+BGy = [0, -WINDOW_SIZE[1]]
 
 def BG():
     moveBG()
@@ -386,14 +390,14 @@ def BG():
     displayBG()
 
 def displayBG():
-    window.blit(BGImg[0], (BGx, BGy[0]))
-    window.blit(BGImg[1], (BGx, BGy[1]))
+    window.blit(getFixedImage('backGround_1'), (BGx, BGy[0]))
+    window.blit(getFixedImage('backGround_2'), (BGx, BGy[1]))
     
 
 def moveBG():
     global BGy
-    BGy[0] += BACKGROUNDSPEED
-    BGy[1] += BACKGROUNDSPEED
+    BGy[0] += BACKGROUND_SPEED
+    BGy[1] += BACKGROUND_SPEED
 
 def reinitialiseBG():
     if(BGy[0]>WINDOW_SIZE[1]):
@@ -595,7 +599,7 @@ def control():
                                                             spawnController['spawner'][wi]['speed'][i], 
                                                             spawnController['spawner'][wi]['type'][i] 
                                                             )))
-            setAnimation(getShipEntity(getEnemyShip(newEnemy)), ENEMY1_SHIP_ANIMATION[0], 1)
+            setAnimation(getShipEntity(getEnemyShip(newEnemy)), 'enemy1_base', 1)
             addEnemy(newEnemy)  
                                 #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
             spawnController['timeElapsed'] = 0
@@ -618,7 +622,7 @@ Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_S
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED),
                                   PLAYER1_WEAPON_COOLDOWN, 0, 1, False))
-setAnimation(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_ANIMATION[0], 0.4)
+setAnimation(getShipEntity(getPlayerShip(Player1)), 'player1_base', 0.4)
 
 
 def inputManager(event):
