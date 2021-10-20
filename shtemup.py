@@ -69,10 +69,10 @@ ENEMY_SIZE = 80
     # format:              ('name'          , nImages, 'ext', size                                  )
 PLAYER1_SHIP_ANIMATION =   ('player1_base'  , 10     , 'png', [PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE])
 ENEMY1_SHIP_ANIMATION  =   ('enemy1_base'   , 10     , 'png', [ENEMY_SIZE, ENEMY_SIZE]              )
-    # /!\ donn't forget to add them to the image bank before main loop
 # FIXED IMAGES
 MISSING_IMAGE          =   ('missing'       , 'jpeg', [100, 100]                  )
-
+    # /!\ donn't forget to add them to the image bank before main loop
+    # TODO automate loading of animation/image to ImageBank
 
 # Background Image
 BGImg = [loadify(IMAGES_PATH +'screen-0183.tif'), loadify(IMAGES_PATH + 'screen-0817.tif')]
@@ -158,7 +158,6 @@ def removeFromList(list, indexesToRemove):
     for i in range(len(indexesToRemove)):
         list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
 
-
 def mapToNewBoundaries(n, a, b, c, d):
     b -= a
     a = 0
@@ -172,6 +171,7 @@ def mapToNewBoundaries(n, a, b, c, d):
     return (n*ratio) + ctemp
 
 #--- END UTILITY FUNCTIOM ---#
+
 
 #--- IMAGE BANK ---#
 
@@ -494,7 +494,7 @@ def inputPlayerStopShoot(Player):
 def getPlayerShip(Player):
     return Player['ship']
 
-#--- ENDS PLAYER ---#
+#--- END PLAYER ---#
 
 #--- COLLISION ---#
 
