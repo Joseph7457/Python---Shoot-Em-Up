@@ -49,7 +49,7 @@ PROJECTILE_SIZE    = 3
 projectiles = []
 
 #Ennemies
-ENEMY_SIZE = 80
+ENEMY_SIZE = 200
 
 # Background
 BACKGROUND_SPEED = 10
@@ -563,7 +563,7 @@ def control():
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
             wi = spawnController['waveIndex']; i = spawnController['spawnIndex']
 
-            newEnemy = createEnemy(createShip(createEntity( 50, 50, 
+            newEnemy = createEnemy(createShip(createEntity( ENEMY_SIZE//2, ENEMY_SIZE, 
                                                             spawnController['spawner'][wi]['x'][i], 
                                                             spawnController['spawner'][wi]['y'][i],
                                                             spawnController['spawner'][wi]['speed'][i], 
