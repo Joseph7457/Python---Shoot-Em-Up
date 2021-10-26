@@ -40,11 +40,14 @@ PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 #Projectiles
 PROJECTILE_SPEED   = 20
 projectiles_axe    = 1
-PROJECTILE_SIZE    = 3
-projectiles = []
+PROJECTILE_SIZE    = 4
+playerProjectiles = []
+enemiesProjectiles = []
 
 #Ennemies
 ENEMY_SIZE = [125, 200]
+ENEMY_WEAPON_COOLDOWN = 500
+ENEMY_PROJECTILE_SPEED = 20
 
 # Background
 BACKGROUND_SPEED = 10
@@ -57,18 +60,7 @@ ANIMATIONS_TO_LOAD = {
     'player1_base'    : (10     , 'png', [80, 80]                 ),
     'enemy1_base'     : (10     , 'png', [80, 80]                 ),
     'skinA'           : (19     , 'png', [123, 194]               ),
-    'V0'              : (8      , 'png', [123, 194]               ), 
-    'V1'              : (5      , 'png', [123, 194]               ), 
-    'V2'              : (35     , 'png', [123, 194]               ), 
-    'V3'              : (27     , 'png', [123, 194]               ), 
-    'V4'              : (62     , 'png', [123, 194]               ), 
-    'V5'              : (13     , 'png', [123, 194]               ), 
-    'V6'              : (35     , 'png', [123, 194]               ), 
-    'V7'              : (4      , 'png', [123, 194]               ), 
-    'V8'              : (9      , 'png', [123, 194]               ), 
-    'V10'             : (17     , 'png', [123, 194]               ),
 }
-
 IMAGES_TO_LOAD = {
 # format:
 #   'name'            : (ext   , [sizeX, sizeY]                   ),
@@ -165,24 +157,8 @@ def getFixedImage(imageName):
 # animations follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
 def addAnimationToBank(animationName, nImages, ext, imageScale):
     ImageBank['animated'][animationName] = []
-
-
-    print(animationName)
-    print(nImages)
-
     for i in range(nImages):
-        print(i)
-        if(nImages >= 11):
-            if (i>9):
-                print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
-                image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
-            else :
-                print(ANIMATION_PATH + animationName + '_0' + str(i) + '.' + ext)
-                image = pygame.image.load(ANIMATION_PATH + animationName + '_0' + str(i) + '.' + ext).convert_alpha(window)
-        else:
-                print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
-                image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window) 
-
+        image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
         ImageBank['animated'][animationName].append(pygame.transform.scale(image, (imageScale[X], imageScale[Y])))
 
 def getAnimationFrame(animationName, frame):
@@ -306,7 +282,7 @@ def displayEntity(entity, currTime):
 
 #--- SHIPS ---#
 
-def createShip(entity, weaponCooldown = 1, shootingDirectionX = 0, shootingDirectionY = 1, isShooting = False):
+def createShip(entity, weaponCooldown = 200, shootingDirectionX = 0, shootingDirectionY = 1, isShooting = False):
     return {
         'entity' : entity,
         'shootingCooldown' : weaponCooldown,
@@ -354,7 +330,7 @@ def startShipShooting(Ship):
 def displayShip(Ship):
     displayEntity(getShipEntity(Ship), pygame.time.get_ticks())
 
-def shipShoot(Ship):
+def shipShoot(Ship, isEnemy = True):
     if((isShipShooting(Ship)) and (pygame.time.get_ticks() - getShipTimeLastShot(Ship) >= getShipShootingCooldown(Ship))):
 
         setShipTimeLastShot(Ship, pygame.time.get_ticks())
@@ -363,10 +339,31 @@ def shipShoot(Ship):
         shipSize = getSize(getShipEntity(Ship))
 
         newProjectile = createEntity(PROJECTILE_SIZE*2, PROJECTILE_SIZE*2)
-        setPosition(newProjectile, (shipPos[X] + (shipSize[X]//2), shipPos[Y] - (shipSize[Y]//2)*projectiles_axe ))
-        setSpeed(newProjectile, PROJECTILE_SPEED)
-        setDirection(newProjectile, 0, -1*projectiles_axe )
-        projectiles.append(newProjectile)
+        direction = getShipShootingDirection(Ship)
+        setDirection(newProjectile, direction[X], direction[Y])
+
+        # Calcul de la position de départ du projectile
+
+        posY = shipPos[Y] + shipSize[Y]//2
+        if direction[Y] < 0:
+            posY = shipPos[Y]
+        elif direction[Y] > 0:
+            posY = shipPos[Y] + shipSize[Y]
+
+        posX = shipPos[X] + (shipSize[X]//2)
+        if direction[X] < 0:
+            posX = shipPos[X]
+        elif direction[X] > 0:
+            posX = shipPos[X] + shipSize[X]
+
+        setPosition(newProjectile, (shipPos[X] + (shipSize[X]//2)+(shipSize[X]//2)*direction[X], posY ))
+
+        if isEnemy:
+            setSpeed(newProjectile, ENEMY_PROJECTILE_SPEED)
+            enemiesProjectiles.append(newProjectile)
+        else:
+            setSpeed(newProjectile, PROJECTILE_SPEED)
+            playerProjectiles.append(newProjectile)
 
 def shipMove(Ship):
     move(Ship['entity'])
@@ -459,6 +456,10 @@ def displayEnemies():
     for enemy in enemies:
         displayShip(getEnemyShip(enemy))
 
+def enemiesShoot():
+    for enemy in enemies:
+        shipShoot(getEnemyShip(enemy))
+
 #--- END ENNEMIES ---#
 
 #--- PLAYER ---#
@@ -505,11 +506,11 @@ def collisionProjectilePlayersEnnemies():
     indexProjectileToDestroy = []
     indexEnemiesToDestroy = []
 
-    for i in range(len(projectiles)):
+    for i in range(len(playerProjectiles)):
         hasCollided = False
         j = 0
         while((j < len(enemies)) and (not hasCollided)): # stop the search if the projectile has already collided
-            if collision_entite(projectiles[i],getShipEntity(getEnemyShip(enemies[j]))):
+            if collision_entite(playerProjectiles[i],getShipEntity(getEnemyShip(enemies[j]))):
                 indexProjectileToDestroy.append(i)
                 indexEnemiesToDestroy.append(j)
                 hasCollided = True
@@ -517,7 +518,7 @@ def collisionProjectilePlayersEnnemies():
             j = j + 1
 
     # Removing projectiles and enemies that has collided
-    removeFromList(projectiles, indexProjectileToDestroy) 
+    removeFromList(playerProjectiles, indexProjectileToDestroy) 
     removeFromList(enemies, indexEnemiesToDestroy)
     
 # Returns True if the player collides with an enemy
@@ -530,17 +531,25 @@ def collisionPlayerEnnemies():
 
 #--- PROJECTILE ---#
 def displayProjectile():
-    for i in range(len(projectiles)):
-        pygame.draw.circle(window, WHITE, (int(getPos(projectiles[i])[X]), int(getPos(projectiles[i])[Y])), PROJECTILE_SIZE)
+    for i in range(len(playerProjectiles)):
+        pygame.draw.circle(window, WHITE, (int(getPos(playerProjectiles[i])[X]), int(getPos(playerProjectiles[i])[Y])), PROJECTILE_SIZE)
+    for i in range(len(enemiesProjectiles)):
+        pygame.draw.circle(window, WHITE, (int(getPos(enemiesProjectiles[i])[X]), int(getPos(enemiesProjectiles[i])[Y])), PROJECTILE_SIZE)
 
 def deplacer_tir():
-    for projectile in projectiles:
+    for projectile in playerProjectiles:
+        move(projectile)
+    for projectile in enemiesProjectiles:
         move(projectile)
 
 def destroyProjOutBound():
-    for projectile in range(len(projectiles)-1):
-        if getPos(projectiles[projectile])[Y] < 0:
-            projectiles.pop(projectile)
+    for i in range(len(playerProjectiles)-1):
+        if getPos(playerProjectiles[i])[Y] < 0:
+            playerProjectiles.pop(i)
+
+    for i in range(len(enemiesProjectiles)-1):
+        if getPos(enemiesProjectiles[i])[Y] < 0:
+            enemiesProjectiles.pop(i)
 
 #--- END PROJECTILE ---#
 
@@ -592,6 +601,10 @@ def control():
                                                             spawnController['spawner'][wi]['type'][i] 
                                                             )))
 
+            setShipShootingCooldown(getEnemyShip(newEnemy), ENEMY_WEAPON_COOLDOWN)
+            startShipShooting(getEnemyShip(newEnemy))
+            setShipShootingDirection(getEnemyShip(newEnemy), 0,  1)            
+
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)
             addEnemy(newEnemy)  
                                 #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
@@ -612,7 +625,7 @@ def control():
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE, 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED),
-                                  PLAYER1_WEAPON_COOLDOWN, 0, 1, False))
+                                  PLAYER1_WEAPON_COOLDOWN, 0, -1, False))
 addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'Skin_Base', 'player1_base', 0.4)
 
 
@@ -633,8 +646,10 @@ def inputManager(event):
         if event.key == pygame.K_LCTRL:
             if (projectiles_axe == 1 ):
                 projectiles_axe  =-1
+                setShipShootingDirection(getPlayerShip(Player1), 0, -1)
             else:
                 projectiles_axe =1
+                setShipShootingDirection(getPlayerShip(Player1), 0, 1)
 
         if event.key == pygame.K_ESCAPE:
             finished = True
@@ -706,8 +721,8 @@ while not finished:
 
         # erase
         #window.fill(BLACK)
-        BG()
-        
+        #BG()
+        window.fill(BLACK)
         
         
         # actions
@@ -715,7 +730,8 @@ while not finished:
         deplacer_tir()
         destroyProjOutBound()
         
-        shipShoot(getPlayerShip(Player1))
+        shipShoot(getPlayerShip(Player1), False)
+        enemiesShoot()
         movePlayer(Player1)
 
         moveAllEnnemies()
