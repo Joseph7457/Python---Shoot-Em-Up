@@ -527,7 +527,14 @@ def collisionPlayerEnnemies():
         if collision_entite(getShipEntity(getEnemyShip(enemies[i])), getShipEntity(getPlayerShip(Player1))):
             return True
     else:
-        return False    
+        return False
+
+def collisionPlayerEnemiesProjectiles():    
+    for i in range(len(enemiesProjectiles)):
+        if collision_entite(enemiesProjectiles[i], getShipEntity(getPlayerShip(Player1))):
+            return True
+    else:
+        return False
 
 #--- PROJECTILE ---#
 def displayProjectile():
