@@ -57,7 +57,18 @@ ANIMATIONS_TO_LOAD = {
     'player1_base'    : (10     , 'png', [80, 80]                 ),
     'enemy1_base'     : (10     , 'png', [80, 80]                 ),
     'skinA'           : (19     , 'png', [123, 194]               ),
+    'V0'              : (8      , 'png', [123, 194]               ), 
+    'V1'              : (5      , 'png', [123, 194]               ), 
+    'V2'              : (35     , 'png', [123, 194]               ), 
+    'V3'              : (27     , 'png', [123, 194]               ), 
+    'V4'              : (62     , 'png', [123, 194]               ), 
+    'V5'              : (13     , 'png', [123, 194]               ), 
+    'V6'              : (35     , 'png', [123, 194]               ), 
+    'V7'              : (4      , 'png', [123, 194]               ), 
+    'V8'              : (9      , 'png', [123, 194]               ), 
+    'V10'             : (17     , 'png', [123, 194]               ),
 }
+
 IMAGES_TO_LOAD = {
 # format:
 #   'name'            : (ext   , [sizeX, sizeY]                   ),
@@ -154,8 +165,24 @@ def getFixedImage(imageName):
 # animations follows this format : sprite/animations/animationName_k.ext where k between [0, nImages-1]
 def addAnimationToBank(animationName, nImages, ext, imageScale):
     ImageBank['animated'][animationName] = []
+
+
+    print(animationName)
+    print(nImages)
+
     for i in range(nImages):
-        image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
+        print(i)
+        if(nImages >= 11):
+            if (i>9):
+                print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
+                image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
+            else :
+                print(ANIMATION_PATH + animationName + '_0' + str(i) + '.' + ext)
+                image = pygame.image.load(ANIMATION_PATH + animationName + '_0' + str(i) + '.' + ext).convert_alpha(window)
+        else:
+                print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
+                image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window) 
+
         ImageBank['animated'][animationName].append(pygame.transform.scale(image, (imageScale[X], imageScale[Y])))
 
 def getAnimationFrame(animationName, frame):
