@@ -5,13 +5,6 @@ https://trello.com/b/1NyyOuI3/shootem-up
 import pygame
 import math
 
-"""
-BUG 1:
-La diagonale gauche ne marche pas lorsqu'on maintient espace enfoncé. 
-Pas de problèmes pour les autres combos de touche.
-Bug from pygame -> unsolvable
-"""
-
 # --- To make code more readable
 X = 0; Y = 1
 
@@ -41,8 +34,10 @@ PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 PROJECTILE_SPEED   = 20
 projectiles_axe    = 1
 PROJECTILE_SIZE    = 4
-playerProjectiles = []
-enemiesProjectiles = []
+Projectiles = {
+    'PlayerTeam' : [],
+    'EnemyTeam' : [],
+}
 
 #Ennemies
 ENEMY_SIZE = [125, 200]
@@ -121,20 +116,22 @@ def normalize2dVector(x, y):
 def angleToCoords(angle):
     return (math.cos(angle), math.sin(angle))
 
-# Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
+    # Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
 def removeFromList(list, indexesToRemove):
     for i in range(len(indexesToRemove)):
         list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
 
-# linear interpolation between a and b using t as a percentage
+    # linear interpolation between a and b using t as a percentage
 def lerp(a, b, t):
     return a + (b - a) * t
 
-# inverse lerp, used to find the t
+    # inverse lerp, used to find the t
 def invLerp(a, b, value):
     return (value - a)/(b-a)
 
+    # remap the value between a & b to newA & newB using linera interpolation 
 # remap the value between a & b to newA & newB using linera interpolation 
+    # remap the value between a & b to newA & newB using linera interpolation 
 def reMap(value, a, b, newA, newB):
     return lerp(newA, newB, invLerp(a, b, value))
     
@@ -144,7 +141,7 @@ ImageBank = {
     'animated' : {},
 }
 
-# fixed images location follows this format : sprite/Images/imageName.ext
+    # fixed images location follows this format : sprite/Images/imageName.ext
 def addImageToBank(imageName, ext, imageScale = [50, 50]):
     image = pygame.image.load(IMAGES_PATH + imageName + '.' + ext).convert_alpha(window)
     ImageBank['fixed'][imageName] = pygame.transform.scale(image, (imageScale[X], imageScale[Y]))
@@ -359,46 +356,19 @@ def shipShoot(Ship, isEnemy = True):
 
         if isEnemy:
             setSpeed(newProjectile, ENEMY_PROJECTILE_SPEED)
-            enemiesProjectiles.append(newProjectile)
+            Projectiles['EnemyTeam'].append(newProjectile)
         else:
             setSpeed(newProjectile, PROJECTILE_SPEED)
-            playerProjectiles.append(newProjectile)
+            Projectiles['PlayerTeam'].append(newProjectile)
 
 def shipMove(Ship):
     move(Ship['entity'])
 
 #--- END SHIPS ---#
 
-#--- BACKGROUND ---#
-# Background
-BGx = 0
-BGy = [0, -WINDOW_SIZE[1]]
-
-def BG():
-    moveBG()
-    reinitialiseBG()
-    displayBG()
-
-def displayBG():
-    window.blit(getFixedImage('backGround_1'), (BGx, BGy[0]))
-    window.blit(getFixedImage('backGround_2'), (BGx, BGy[1]))
-    
-
-def moveBG():
-    global BGy
-    BGy[0] += BACKGROUND_SPEED
-    BGy[1] += BACKGROUND_SPEED
-
-def reinitialiseBG():
-    if(BGy[0]>WINDOW_SIZE[1]):
-        BGy[0] = - WINDOW_SIZE[1]
-    if(BGy[1]>WINDOW_SIZE[1]):
-        BGy[1] = - WINDOW_SIZE[1]
-
-#--- END BACKGROUND ---#
 
 #--- ENEMIES ---#
-enemies = []
+Enemies = []
 
 def createEnemy(ship, moveType):
     return {
@@ -439,20 +409,20 @@ def setShip(Enemy, newShip):
     Enemy['ship'] = newShip
 
 def addEnemy(enemy):
-    enemies.append(enemy)
+    Enemies.append(enemy)
         
 def removeEnemy(index):
-    enemies.pop(index)
+    Enemies.pop(index)
 
 def displayEnemy(enemy):
     displayShip(enemy['ship'])
     
-def displayEnemies():
-    for enemy in enemies:
+def displayEnemies(enemies):
+    for enemy in Enemies:
         displayEnemy(enemy)
         
 def enemiesShoot():
-    for enemy in enemies:
+    for enemy in Enemies:
         shipShoot(getEnemyShip(enemy))
 
 def moveAllEnnemies(enemies):
@@ -500,16 +470,16 @@ def collision_entite(entite1, entite2):
     rect2 = pygame.Rect(getPos(entite2), getSize(entite2))
     return pygame.Rect.colliderect(rect1, rect2)
 
-def collisionProjectilePlayersEnnemies():
+def collisionEnnemiesProjectile(enemies, projectiles):
     global score
     indexProjectileToDestroy = []
     indexEnemiesToDestroy = []
 
-    for i in range(len(playerProjectiles)):
+    for i in range(len(projectiles)):
         hasCollided = False
         j = 0
         while((j < len(enemies)) and (not hasCollided)): # stop the search if the projectile has already collided
-            if collision_entite(playerProjectiles[i],getShipEntity(getEnemyShip(enemies[j]))):
+            if collision_entite(projectiles[i], getShipEntity(getEnemyShip(enemies[j]))):
                 indexProjectileToDestroy.append(i)
                 indexEnemiesToDestroy.append(j)
                 hasCollided = True
@@ -517,46 +487,35 @@ def collisionProjectilePlayersEnnemies():
             j = j + 1
 
     # Removing projectiles and enemies that has collided
-    removeFromList(playerProjectiles, indexProjectileToDestroy) 
+    removeFromList(projectiles, indexProjectileToDestroy) 
     removeFromList(enemies, indexEnemiesToDestroy)
     
 # Returns True if the player collides with an enemy
-def collisionPlayerEnnemies():
-    for i in range(len(enemies)):
-        if collision_entite(getShipEntity(getEnemyShip(enemies[i])), getShipEntity(getPlayerShip(Player1))):
+def collisionPlayerEnnemies(player, enemies):
+    for enemy in enemies:
+        if collision_entite(getShipEntity(getEnemyShip(enemy)), getShipEntity(getPlayerShip(player))):
             return True
-    else:
-        return False
+    return False
 
-def collisionPlayerEnemiesProjectiles():    
-    for i in range(len(enemiesProjectiles)):
-        if collision_entite(enemiesProjectiles[i], getShipEntity(getPlayerShip(Player1))):
+def collisionPlayerProjectile(player, projectiles):    
+    for enemy in projectiles:
+        if collision_entite(enemy, getShipEntity(getPlayerShip(player))):
             return True
-    else:
-        return False
+    return False
 
 #--- PROJECTILE ---#
-def displayProjectile():
-    for i in range(len(playerProjectiles)):
-        pygame.draw.circle(window, WHITE, (int(getPos(playerProjectiles[i])[X]), int(getPos(playerProjectiles[i])[Y])), PROJECTILE_SIZE)
-    for i in range(len(enemiesProjectiles)):
-        pygame.draw.circle(window, WHITE, (int(getPos(enemiesProjectiles[i])[X]), int(getPos(enemiesProjectiles[i])[Y])), PROJECTILE_SIZE)
+def displayProjectiles(projectiles):
+    for projectile in projectiles:
+        pygame.draw.circle(window, WHITE, (int(getPos(projectile)[X]), int(getPos(projectile)[Y])), PROJECTILE_SIZE)
 
-def deplacer_tir():
-    for projectile in playerProjectiles:
-        move(projectile)
-    for projectile in enemiesProjectiles:
+def moveProjectiles(projectiles):
+    for projectile in projectiles:
         move(projectile)
 
-def destroyProjOutBound():
-    for i in range(len(playerProjectiles)-1):
-        if getPos(playerProjectiles[i])[Y] < 0:
-            playerProjectiles.pop(i)
-
-    for i in range(len(enemiesProjectiles)-1):
-        if getPos(enemiesProjectiles[i])[Y] < 0:
-            enemiesProjectiles.pop(i)
-
+def destroyProjOutBound(projectiles):
+    for i in range(len(projectiles)-1):
+        if getPos(projectiles[i])[Y] < 0:
+            projectiles.pop(i)
 #--- END PROJECTILE ---#
 
 #--- Control ---#
@@ -674,6 +633,36 @@ def inputManager(event):
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
 
+
+#--- BACKGROUND ---#
+# Background
+BGx = 0
+BGy = [0, -WINDOW_SIZE[1]]
+
+def BG():
+    moveBG()
+    reinitialiseBG()
+    displayBG()
+
+def displayBG():
+    window.blit(getFixedImage('backGround_1'), (BGx, BGy[0]))
+    window.blit(getFixedImage('backGround_2'), (BGx, BGy[1]))
+    
+
+def moveBG():
+    global BGy
+    BGy[0] += BACKGROUND_SPEED
+    BGy[1] += BACKGROUND_SPEED
+
+def reinitialiseBG():
+    if(BGy[0]>WINDOW_SIZE[1]):
+        BGy[0] = - WINDOW_SIZE[1]
+    if(BGy[1]>WINDOW_SIZE[1]):
+        BGy[1] = - WINDOW_SIZE[1]
+
+#--- END BACKGROUND ---#
+
+
 # Score
 score = 0
 def displayScore():
@@ -733,20 +722,28 @@ while not finished:
         
         # actions
         control()
-        deplacer_tir()
-        destroyProjOutBound()
-        
+        moveProjectiles(Projectiles['EnemyTeam'])
+        moveProjectiles(Projectiles['PlayerTeam'])
+        destroyProjOutBound(Projectiles['EnemyTeam'])
+        destroyProjOutBound(Projectiles['PlayerTeam'])
+
         shipShoot(getPlayerShip(Player1), False)
         enemiesShoot()
         movePlayer(Player1)
 
-        moveAllEnnemies(enemies)
-        collisionProjectilePlayersEnnemies()
+        moveAllEnnemies(Enemies)
+        collisionEnnemiesProjectile(Enemies, Projectiles['PlayerTeam'])
+        """
+        collisionEvent = collisionPlayerEnnemies(Player1, Enemies)
+        if(collisionEvent):
+            print(collisionEvent)
+        """
         
         # display
-        displayEnemies()
+        displayEnemies(Enemies)
         displayShip(getPlayerShip(Player1))
-        displayProjectile()
+        displayProjectiles(Projectiles['EnemyTeam'])
+        displayProjectiles(Projectiles['PlayerTeam'])
         displayScore()
         pygame.display.flip()
 
