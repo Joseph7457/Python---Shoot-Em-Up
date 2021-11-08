@@ -118,26 +118,27 @@ def normalize2dVector(x, y):
     module = math.sqrt(x**2+y**2)
     return (x/module, y/module)
 
+def angleToCoords(angle):
+    return (math.cos(angle), math.sin(angle))
+
 # Removes all the elements from the list at indexes in the indexesToRemove list, indexesToRemove needs to be in increasing order
 def removeFromList(list, indexesToRemove):
     for i in range(len(indexesToRemove)):
         list.pop(indexesToRemove[i] - i) #indexesToRemove[i] >= i because indexesToRemove is in increasing order
 
-def mapToNewBoundaries(n, a, b, c, d):
-    b -= a
-    a = 0
+# linear interpolation between a and b using t as a percentage
+def lerp(a, b, t):
+    return a + (b - a) * t
 
-    ctemp = c
-    d -= c
-    c = 0
+# inverse lerp, used to find the t
+def invLerp(a, b, value):
+    return (value - a)/(b-a)
 
-    ratio = d/b
-    n = (n*ratio) + ctemp
-
-    return n
+# remap the value between a & b to newA & newB using linera interpolation 
+def reMap(value, a, b, newA, newB):
+    return lerp(newA, newB, invLerp(a, b, value))
     
 #--- IMAGE BANK ---#
-
 ImageBank = {
     'fixed': {},
     'animated' : {},
@@ -208,7 +209,6 @@ def shouldAnimate(animation, currTime):
 def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
     return {
         'position': [x, y],
-        'position initiale': [x, y],
         'direction': [0,0], # normalized
         'speed': speed,
         'size': [width, height],
@@ -216,7 +216,6 @@ def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
         'isAnimated' : False,
         'animations' : {},
         'currAnimation' : None,
-        'moveType' : mT # ref to function controlling direction and speed of entity
     }
 
     #Getters
@@ -398,47 +397,40 @@ def reinitialiseBG():
 
 #--- END BACKGROUND ---#
 
-def moveOneEnemy(entity): # RETOURNE UN VECTEUR VITESSE A AJOUTER A LA POSITION
-    if   (entity['ship']['entity']['moveType'] == "VERTICAL"):
-        entity['ship']['entity']['direction'] = returnUnitVector(math.pi/2)
-
-    elif (entity['ship']['entity']['moveType'] == "HORIZONTAL"):
-        entity['ship']['entity']['direction'] = returnUnitVector(0)
-
-    elif (entity['ship']['entity']['moveType'] == "DIAGONAL"):
-        entity['ship']['entity']['direction'] = returnUnitVector(3*math.pi/8)
-
-    elif (entity['ship']['entity']['moveType'] == "REBONDG"):
-        t = pygame.time.get_ticks()
-        while(t>1000):
-            t -= 1000
-        d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
-        entity['ship']['entity']['direction'] = returnUnitVector(-d)
-
-    elif (entity['ship']['entity']['moveType'] == "REBONDD"):
-        t = pygame.time.get_ticks()
-        while(t>1000):
-            t -= 1000
-        d = mapToNewBoundaries(t, 0,1000, 0, math.pi/2)
-        entity['ship']['entity']['direction'] = returnUnitVector(d)
-        
-
-    shipMove(entity['ship'])
-
-def moveAllEnnemies():
-    for e in  enemies:
-        moveOneEnemy(e)
-
-def returnUnitVector(angle):
-    return (math.cos(angle), math.sin(angle))
-
 #--- ENEMIES ---#
 enemies = []
 
-def createEnemy(ship):
+def createEnemy(ship, moveType):
     return {
         'ship' : ship,
+        'initPos' : [0,0],
+        'moveType' : moveType, # ref to function controlling direction and speed of entity
     }
+
+def moveEnemy(enemy):
+    if (enemy['moveType'] == "VERTICAL"):
+        setDirection(getShipEntity(enemy['ship']), *angleToCoords(math.pi/2))
+
+    elif (enemy['moveType'] == "HORIZONTAL"):
+        setDirection(getShipEntity(enemy['ship']), *angleToCoords(0))
+
+    elif (enemy['moveType'] == "DIAGONAL"):
+        setDirection(getShipEntity(enemy['ship']), *angleToCoords(3*math.pi/8))
+
+    elif (enemy['moveType'] == "REBONDG"):
+        t = pygame.time.get_ticks()
+        while(t>1000):
+            t -= 1000
+        d = reMap(t, 0,1000, 0, math.pi/2)
+        setDirection(getShipEntity(enemy['ship']), *angleToCoords(-d))
+
+    elif (enemy['moveType'] == "REBONDD"):
+        t = pygame.time.get_ticks()
+        while(t>1000):
+            t -= 1000
+        d = reMap(t, 0,1000, 0, math.pi/2)
+        setDirection(getShipEntity(enemy['ship']), angleToCoords(d))
+    shipMove(enemy['ship'])
 
 def getEnemyShip(Enemy):
     return Enemy['ship']
@@ -449,16 +441,23 @@ def setShip(Enemy, newShip):
 def addEnemy(enemy):
     enemies.append(enemy)
         
-def destroyEnemy(index):
+def removeEnemy(index):
     enemies.pop(index)
 
+def displayEnemy(enemy):
+    displayShip(enemy['ship'])
+    
 def displayEnemies():
     for enemy in enemies:
-        displayShip(getEnemyShip(enemy))
-
+        displayEnemy(enemy)
+        
 def enemiesShoot():
     for enemy in enemies:
         shipShoot(getEnemyShip(enemy))
+
+def moveAllEnnemies(enemies):
+    for e in  enemies:
+        moveEnemy(e)
 
 #--- END ENNEMIES ---#
 
@@ -604,9 +603,9 @@ def control():
             newEnemy = createEnemy(createShip(createEntity( ENEMY_SIZE[X], ENEMY_SIZE[Y], 
                                                             spawnController['spawner'][wi]['x'][i], 
                                                             spawnController['spawner'][wi]['y'][i],
-                                                            spawnController['spawner'][wi]['speed'][i], 
-                                                            spawnController['spawner'][wi]['type'][i] 
-                                                            )))
+                                                            spawnController['spawner'][wi]['speed'][i],
+                                                            )), 
+                                    spawnController['spawner'][wi]['type'][i] )
 
             setShipShootingCooldown(getEnemyShip(newEnemy), ENEMY_WEAPON_COOLDOWN)
             startShipShooting(getEnemyShip(newEnemy))
@@ -741,7 +740,7 @@ while not finished:
         enemiesShoot()
         movePlayer(Player1)
 
-        moveAllEnnemies()
+        moveAllEnnemies(enemies)
         collisionProjectilePlayersEnnemies()
         
         # display
