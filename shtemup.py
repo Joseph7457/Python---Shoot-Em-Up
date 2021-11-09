@@ -29,6 +29,8 @@ PLAYER1_SHIP_SPEED = 10
 PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
+INVULNERABILITY_DURATION = 500 # in ms
+LIVES_AT_START = 3
 
 #Projectiles
 PROJECTILE_SPEED   = 20
@@ -46,7 +48,6 @@ ENEMY_PROJECTILE_SPEED = 20
 
 # Background
 BACKGROUND_SPEED = 10
-
 
 #Animation and Images to load in bank
 ANIMATIONS_TO_LOAD = {
@@ -462,6 +463,10 @@ def inputPlayerStopShoot(Player):
 def getPlayerShip(Player):
     return Player['ship']
 
+def resetPlayerInput(Player):
+    Player['horizontalInput'] = 0
+    Player['verticalInput'] = 0 
+
 #--- Collisions
 
 # Return True if collision occurs, False otherway
@@ -513,9 +518,14 @@ def moveProjectiles(projectiles):
         move(projectile)
 
 def destroyProjOutBound(projectiles):
+    toRemove = []
     for i in range(len(projectiles)-1):
-        if getPos(projectiles[i])[Y] < 0:
-            projectiles.pop(i)
+        pos = getPos(projectiles[i])
+        if pos[Y] < 0 or pos[Y] > WINDOW_SIZE[Y] or pos[X] < 0 or pos[X] > WINDOW_SIZE[X]:
+            toRemove.append(i)
+
+    removeFromList(projectiles, toRemove)
+
 #--- END PROJECTILE ---#
 
 #--- Control ---#
@@ -542,9 +552,8 @@ def createSpawner(t, w, x, y, s, skin):
         'skin'   : skin
     }
 
-def control():
-    global spawnController, oldTime, deltaTime
-
+def initializeSpawners():
+    global spawnController
     # celle  ci il faudrait l'extraire , elle fait part de l'initialisation
     if (spawnController == 0):
         spawnController = createSpawnController()
@@ -553,6 +562,11 @@ def control():
             spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3], allWaveData[w][4], allWaveData[w][5])
             spawnController['spawner'].append(spawner)
     # jusqu'ici je pense
+
+def control():
+    global spawnController, oldTime, deltaTime
+
+    initializeSpawners()
 
     if (len (spawnController['spawner']) > 0):
     
@@ -678,6 +692,18 @@ def displayMenu():
     displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
     displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
 
+# used to restart everything when going back to the menu from playing.
+def restart():
+    global spawnController, score
+    spawnController = 0    
+    initializeSpawners()
+    setPosition(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_START_POS)
+
+    Enemies.clear()
+    Projectiles['PlayerTeam'].clear()
+    Projectiles['EnemyTeam'].clear()
+    resetPlayerInput(Player1)
+    score = 0 
 
 # ----- End function definition
 
@@ -700,9 +726,10 @@ while not finished:
             playing = True
             inputManager(event)
 
+    window.fill(BLACK)
     displayMenu()
     pygame.display.flip()
-
+    
     while playing:
 
         for event in pygame.event.get():
@@ -733,11 +760,11 @@ while not finished:
 
         moveAllEnnemies(Enemies)
         collisionEnnemiesProjectile(Enemies, Projectiles['PlayerTeam'])
-        """
+
         collisionEvent = collisionPlayerEnnemies(Player1, Enemies)
         if(collisionEvent):
-            print(collisionEvent)
-        """
+            playing = False
+            restart()
         
         # display
         displayEnemies(Enemies)
@@ -751,4 +778,5 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
+
 
