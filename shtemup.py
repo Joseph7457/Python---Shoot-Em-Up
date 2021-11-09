@@ -472,11 +472,11 @@ def createPlayer(ship):
 
     #Methods
 def inputPlayerHor(Player, value):
-    Player['horizontalInput'] = value
+    Player['horizontalInput'] += value
 
 
 def inputPlayerVer(Player, value):
-    Player['verticalInput'] = value
+    Player['verticalInput'] += value
 
 
 def movePlayer(Player):
@@ -673,13 +673,13 @@ def inputManager(event):
     if event.type == pygame.KEYUP :
         #Player 1
         if event.key == pygame.K_q or event.key == pygame.K_LEFT:
-            inputPlayerHor(Player1, 0)
+            inputPlayerHor(Player1, 1)
         if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-            inputPlayerHor(Player1, 0)
+            inputPlayerHor(Player1, -1)
         if event.key == pygame.K_z or event.key == pygame.K_UP:
-            inputPlayerVer(Player1, 0)
+            inputPlayerVer(Player1, 1)
         if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-            inputPlayerVer(Player1, 0)
+            inputPlayerVer(Player1, -1)
         if event.key == pygame.K_SPACE :
             inputPlayerStopShoot(Player1)
 
