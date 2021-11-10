@@ -438,16 +438,17 @@ def createPlayer(ship):
         'ship' : ship,
         'verticalInput' : 0,
         'horizontalInput' : 0,
+        'lives': LIVES_AT_START,
+        'invulnerable': False,
+        'lastTimeHit': 0
     }
 
     #Methods
 def inputPlayerHor(Player, value):
     Player['horizontalInput'] += value
 
-
 def inputPlayerVer(Player, value):
     Player['verticalInput'] += value
-
 
 def movePlayer(Player):
     [x, y] = normalize2dVector(Player['horizontalInput'], Player['verticalInput'])
@@ -465,7 +466,22 @@ def getPlayerShip(Player):
 
 def resetPlayerInput(Player):
     Player['horizontalInput'] = 0
-    Player['verticalInput'] = 0 
+    Player['verticalInput'] = 0
+
+def isInvulnerable(Player):
+    return Player['invulnerable']
+
+def onPlayerHit(Player, time):
+    Player['invulnerable'] = True
+    Player['lives'] -= 1
+    Player['lastTimeHit'] = time
+
+def updateInvulnerability(Player, time):
+    if (time - Player['lastTimeHit']) >= INVULNERABILITY_DURATION:
+        Player['invulnerable'] = False
+
+def getPlayerLives(Player):
+    return Player['lives']
 
 #--- Collisions
 
@@ -475,6 +491,7 @@ def collision_entite(entite1, entite2):
     rect2 = pygame.Rect(getPos(entite2), getSize(entite2))
     return pygame.Rect.colliderect(rect1, rect2)
 
+# Deletes enemies and projectiles who collide
 def collisionEnnemiesProjectile(enemies, projectiles):
     global score
     indexProjectileToDestroy = []
@@ -502,6 +519,7 @@ def collisionPlayerEnnemies(player, enemies):
             return True
     return False
 
+# Returns True if the player collides with a projectile from a list
 def collisionPlayerProjectile(player, projectiles):    
     for enemy in projectiles:
         if collision_entite(enemy, getShipEntity(getPlayerShip(player))):
@@ -692,6 +710,11 @@ def displayMenu():
     displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
     displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
 
+# Lives
+
+def displayLives():
+    displayMessage(scoreFont, "Lives: " + str(getPlayerLives(Player1)), WHITE, (0,WINDOW_SIZE[Y]-100))
+
 # used to restart everything when going back to the menu from playing.
 def restart():
     global spawnController, score
@@ -703,7 +726,8 @@ def restart():
     Projectiles['PlayerTeam'].clear()
     Projectiles['EnemyTeam'].clear()
     resetPlayerInput(Player1)
-    score = 0 
+    score = 0
+    Player1['lives'] = LIVES_AT_START
 
 # ----- End function definition
 
@@ -731,6 +755,8 @@ while not finished:
     pygame.display.flip()
     
     while playing:
+
+        current_time = pygame.time.get_ticks()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -761,10 +787,14 @@ while not finished:
         moveAllEnnemies(Enemies)
         collisionEnnemiesProjectile(Enemies, Projectiles['PlayerTeam'])
 
-        collisionEvent = collisionPlayerEnnemies(Player1, Enemies)
-        if(collisionEvent):
-            playing = False
-            restart()
+        if not isInvulnerable(Player1):
+            if collisionPlayerEnnemies(Player1, Enemies):
+                onPlayerHit(Player1, current_time)
+                if getPlayerLives(Player1) <= 0:
+                    playing = False
+                    restart()
+        else:
+            updateInvulnerability(Player1, current_time)
         
         # display
         displayEnemies(Enemies)
@@ -772,6 +802,7 @@ while not finished:
         displayProjectiles(Projectiles['EnemyTeam'])
         displayProjectiles(Projectiles['PlayerTeam'])
         displayScore()
+        displayLives()
         pygame.display.flip()
 
         temps.tick(60)
