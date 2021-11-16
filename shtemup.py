@@ -277,6 +277,40 @@ def displayEntity(entity, currTime):
 #--- END ENTITY ---#
 
 
+#--- PROJECTILE ---#
+def createProjectile(projectileBP):
+   return {
+
+
+
+   }
+
+
+
+
+
+
+
+#--- END PROJECTILE ---#
+
+#--- WEAPON ---#
+def createWeapon(projectile, ownerTeam, cooldown):
+   return {
+      'projectile' : projectile,
+      'ownerTeam' : ownerTeam,
+      'cooldown' : cooldown,
+      'lastShot' : 0,
+   }
+
+def weaponShoot(weapon, currTime):
+   
+
+
+   return
+
+
+#--- END WEAPON ---#
+
 #--- SHIPS ---#
 
 def createShip(entity, weaponCooldown = 200, shootingDirectionX = 0, shootingDirectionY = 1, isShooting = False):
@@ -809,6 +843,7 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
+
 
 
 
