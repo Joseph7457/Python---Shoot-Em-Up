@@ -277,40 +277,6 @@ def displayEntity(entity, currTime):
 #--- END ENTITY ---#
 
 
-#--- PROJECTILE ---#
-def createProjectile(projectileBP):
-   return {
-
-
-
-   }
-
-
-
-
-
-
-
-#--- END PROJECTILE ---#
-
-#--- WEAPON ---#
-def createWeapon(projectile, ownerTeam, cooldown):
-   return {
-      'projectile' : projectile,
-      'ownerTeam' : ownerTeam,
-      'cooldown' : cooldown,
-      'lastShot' : 0,
-   }
-
-def weaponShoot(weapon, currTime):
-   
-
-
-   return
-
-
-#--- END WEAPON ---#
-
 #--- SHIPS ---#
 
 def createShip(entity, weaponCooldown = 200, shootingDirectionX = 0, shootingDirectionY = 1, isShooting = False):
@@ -822,7 +788,7 @@ while not finished:
         collisionEnnemiesProjectile(Enemies, Projectiles['PlayerTeam'])
 
         if not isInvulnerable(Player1):
-            if collisionPlayerEnnemies(Player1, Enemies):
+            if collisionPlayerEnnemies(Player1, Enemies) or collisionPlayerProjectile(Player1, Projectiles['EnemyTeam']):
                 onPlayerHit(Player1, current_time)
                 if getPlayerLives(Player1) <= 0:
                     playing = False
@@ -843,7 +809,6 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
-
 
 
 
