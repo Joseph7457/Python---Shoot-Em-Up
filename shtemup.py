@@ -445,10 +445,10 @@ def createPlayer(ship):
 
     #Methods
 def inputPlayerHor(Player, value):
-    Player['horizontalInput'] += value
+    Player['horizontalInput'] = value
 
 def inputPlayerVer(Player, value):
-    Player['verticalInput'] += value
+    Player['verticalInput'] = value
 
 def movePlayer(Player):
     [x, y] = normalize2dVector(Player['horizontalInput'], Player['verticalInput'])
@@ -465,8 +465,13 @@ def getPlayerShip(Player):
     return Player['ship']
 
 def resetPlayerInput(Player):
+    global leftInput, rightInput, downInput, upInput
     Player['horizontalInput'] = 0
     Player['verticalInput'] = 0
+    leftInput = 0
+    rightInput = 0
+    upInput = 0
+    downInput = 0
 
 def isInvulnerable(Player):
     return Player['invulnerable']
@@ -625,46 +630,58 @@ Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_S
                                   PLAYER1_WEAPON_COOLDOWN, 0, -1, False))
 addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'Skin_Base', 'player1_base', 0.4)
 
+leftInput = 0
+rightInput = 0
+upInput = 0
+downInput = 0
 
-def inputManager(event):
-    global Player1, finished, playing, projectiles_axe 
-    if event.type == pygame.KEYDOWN :
-        #Player 1
-        if event.key == pygame.K_q or event.key == pygame.K_LEFT:
-            inputPlayerHor(Player1, -1)
-        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-            inputPlayerHor(Player1, 1)
-        if event.key == pygame.K_z or event.key == pygame.K_UP:
-            inputPlayerVer(Player1, -1)
-        if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-            inputPlayerVer(Player1, 1)
-        if event.key == pygame.K_SPACE :
-            inputPlayerShoot(Player1)
-        if event.key == pygame.K_LCTRL:
-            if (projectiles_axe == 1 ):
-                projectiles_axe  =-1
-                setShipShootingDirection(getPlayerShip(Player1), 0, -1)
-            else:
-                projectiles_axe =1
-                setShipShootingDirection(getPlayerShip(Player1), 0, 1)
+def inputManager(events):
+    global Player1, finished, playing, projectiles_axe, leftInput, rightInput, upInput, downInput
 
-        if event.key == pygame.K_ESCAPE:
+    for event in events:
+
+        if event.type == pygame.QUIT:
             finished = True
-            playing = False 
+            playing = False
 
-    if event.type == pygame.KEYUP :
-        #Player 1
-        if event.key == pygame.K_q or event.key == pygame.K_LEFT:
-            inputPlayerHor(Player1, 1)
-        if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-            inputPlayerHor(Player1, -1)
-        if event.key == pygame.K_z or event.key == pygame.K_UP:
-            inputPlayerVer(Player1, 1)
-        if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-            inputPlayerVer(Player1, -1)
-        if event.key == pygame.K_SPACE :
-            inputPlayerStopShoot(Player1)
+        if event.type == pygame.KEYDOWN :
+            #Player 1
+            if event.key == pygame.K_q or event.key == pygame.K_LEFT:
+                leftInput -= 1
+            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                rightInput = 1
+            if event.key == pygame.K_z or event.key == pygame.K_UP:
+                upInput = -1
+            if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                downInput = 1
+            if event.key == pygame.K_SPACE :
+                inputPlayerShoot(Player1)
+            if event.key == pygame.K_LCTRL:
+                if (projectiles_axe == 1 ):
+                    projectiles_axe  =-1
+                    setShipShootingDirection(getPlayerShip(Player1), 0, -1)
+                else:
+                    projectiles_axe =1
+                    setShipShootingDirection(getPlayerShip(Player1), 0, 1)
 
+            if event.key == pygame.K_ESCAPE:
+                finished = True
+                playing = False
+        
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_q or event.key == pygame.K_LEFT:
+                leftInput = 0
+            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                rightInput = 0
+            if event.key == pygame.K_z or event.key == pygame.K_UP:
+                upInput = 0
+            if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                downInput = 0
+            if event.key == pygame.K_SPACE :
+                inputPlayerStopShoot(Player1)
+
+    inputPlayerHor(Player1, leftInput + rightInput)
+    inputPlayerVer(Player1, upInput + downInput)
 
 #--- BACKGROUND ---#
 # Background
@@ -748,7 +765,7 @@ while not finished:
 
         if event.type == pygame.KEYDOWN :
             playing = True
-            inputManager(event)
+            resetPlayerInput(Player1)
 
     window.fill(BLACK)
     displayMenu()
@@ -758,14 +775,7 @@ while not finished:
 
         current_time = pygame.time.get_ticks()
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                   finished = True
-                   playing = False
-
-            else:
-              inputManager(event)
-
+        inputManager(pygame.event.get())
 
         # erase
         #window.fill(BLACK)
