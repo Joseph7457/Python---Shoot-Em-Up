@@ -53,6 +53,7 @@ BACKGROUND_SPEED = 10
 ANIMATIONS_TO_LOAD = {
 # format:
 #   'name'            : (nImages, 'ext', size                     ),
+    'ClusterExplosion': (11     , 'png', [48, 48]                 ),
     'player1_base'    : (10     , 'png', [80, 80]                 ),
     'enemy1_base'     : (10     , 'png', [80, 80]                 ),
     'skinA'           : (19     , 'png', [123, 194]               ),
@@ -275,6 +276,63 @@ def displayEntity(entity, currTime):
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
 #--- END ENTITY ---#
+
+#--- PROJECTILE ---#
+def createProjectile(size, Animation, AnimationOnHit, AnimationOnHitDuration, speed, direction, movementType, projectileDamage, position):
+   projectileEntity = createEntity(size[X], size[Y], position[X], position[Y], speed)
+   setDirection(projectileEntity, direction[X], direction[Y])
+   addEntityAnimation(projectileEntity, 'standardAnimation', Animation, 0.4)
+   addEntityAnimation(projectileEntity, 'AnimationOnHit', AnimationOnHit, 0.4)
+
+   return {
+      'entity' : projectileEntity,
+      'damage' : projectileDamage,
+      'movementType' : movementType,
+      'onHitDuration' : AnimationOnHitDuration,
+   }
+
+def projectileOnHit(projectile, currTime):
+   switchEntityAnimation(projectile['entity'], 'animationOnHit')
+   setSpeed(projectile['entity'], 0)
+   Projectiles['toDestroy'].append((projectile, currTime))
+   
+def addProjectile(projectileTeam, projectile):
+   Projectiles.append(projectile)
+
+def moveProjectiles(projectileTeam):
+   for projectile in Projectiles[projectileTeam]:
+      move(projectile['entity'])
+
+def displayProjectiles(projectileTeam, currTime):
+   for projectile in Projectiles[projectileTeam]:
+      displayEntity(projectile['entity'], currTime)
+
+def updateProjectilesToDestroy(currTime):
+   projectilesToRemove = []
+   for i in range(len(Projectiles['toDestroy'])):
+      if(Projectiles['toDestroy'][i][1] + Projectiles['toDestroy'][i]['onHitDuration'] * 1000 > currTime):
+         projectilesToRemove.append(i)
+
+   removeFromList(Projectiles['toDestroy'], projectilesToRemove)
+
+#--- END PROJECTILE ---#
+
+
+#--- WEAPON ---#
+def createWeapon(projectileBP, ownerTeam, cooldown):
+   return {
+      'projectile' : projectileBP,
+      'ownerTeam' : ownerTeam,
+      'cooldown' : cooldown,
+      'lastShot' : 0,
+   }
+
+def weaponShoot(weapon, position, currTime):
+
+   return
+
+
+#--- END WEAPON ---#
 
 
 #--- SHIPS ---#
@@ -819,6 +877,7 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
+
 
 
 
