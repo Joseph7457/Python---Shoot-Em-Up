@@ -192,9 +192,9 @@ def createAnimation(animationName, animationSpeed):
         'indexCurrImage': 0,
     }
 
-def getNextAnimationFrame(animation):
+def getNextAnimationFrame(animation, time):
     animation['indexCurrImage'] = (animation['indexCurrImage'] + 1) % getLenAnimation(animation['animationName'])
-    animation['timeSinceLastAnim'] = pygame.time.get_ticks()
+    animation['timeSinceLastAnim'] = time
     return getAnimationFrame(animation['animationName'], animation['indexCurrImage'])
 
 def shouldAnimate(animation, currTime):
@@ -271,7 +271,7 @@ def move(entity):
 def displayEntity(entity, currTime):
     if entity['isAnimated']:
         if shouldAnimate(entity['animations'][entity['currAnimation']], currTime):
-            entity['currImage'] = pygame.transform.scale(getNextAnimationFrame(entity['animations'][entity['currAnimation']]), entity['size'])
+            entity['currImage'] = pygame.transform.scale(getNextAnimationFrame(entity['animations'][entity['currAnimation']], currTime), entity['size'])
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
 
 #--- END ENTITY ---#
@@ -324,13 +324,13 @@ def startShipShooting(Ship):
     Ship['isShooting'] = True
 
     # Methods
-def displayShip(Ship):
-    displayEntity(getShipEntity(Ship), pygame.time.get_ticks())
+def displayShip(Ship, time):
+    displayEntity(getShipEntity(Ship), time)
 
-def shipShoot(Ship, isEnemy = True):
-    if((isShipShooting(Ship)) and (pygame.time.get_ticks() - getShipTimeLastShot(Ship) >= getShipShootingCooldown(Ship))):
+def shipShoot(Ship, time, isEnemy = True):
+    if((isShipShooting(Ship)) and (time - getShipTimeLastShot(Ship) >= getShipShootingCooldown(Ship))):
 
-        setShipTimeLastShot(Ship, pygame.time.get_ticks())
+        setShipTimeLastShot(Ship, time)
 
         shipPos = getPos(getShipEntity(Ship))
         shipSize = getSize(getShipEntity(Ship))
@@ -378,7 +378,7 @@ def createEnemy(ship, moveType):
         'moveType' : moveType, # ref to function controlling direction and speed of entity
     }
 
-def moveEnemy(enemy):
+def moveEnemy(enemy, time):
     if (enemy['moveType'] == "VERTICAL"):
         setDirection(getShipEntity(enemy['ship']), *angleToCoords(math.pi/2))
 
@@ -389,14 +389,14 @@ def moveEnemy(enemy):
         setDirection(getShipEntity(enemy['ship']), *angleToCoords(3*math.pi/8))
 
     elif (enemy['moveType'] == "REBONDG"):
-        t = pygame.time.get_ticks()
+        t = time
         while(t>1000):
             t -= 1000
         d = reMap(t, 0,1000, 0, math.pi/2)
         setDirection(getShipEntity(enemy['ship']), *angleToCoords(-d))
 
     elif (enemy['moveType'] == "REBONDD"):
-        t = pygame.time.get_ticks()
+        t = time
         while(t>1000):
             t -= 1000
         d = reMap(t, 0,1000, 0, math.pi/2)
@@ -415,20 +415,20 @@ def addEnemy(enemy):
 def removeEnemy(index):
     Enemies.pop(index)
 
-def displayEnemy(enemy):
-    displayShip(enemy['ship'])
+def displayEnemy(enemy, time):
+    displayShip(enemy['ship'], time)
     
-def displayEnemies(enemies):
+def displayEnemies(enemies, time):
     for enemy in Enemies:
-        displayEnemy(enemy)
+        displayEnemy(enemy, time)
         
-def enemiesShoot():
+def enemiesShoot(time):
     for enemy in Enemies:
-        shipShoot(getEnemyShip(enemy))
+        shipShoot(getEnemyShip(enemy), time)
 
-def moveAllEnnemies(enemies):
+def moveAllEnnemies(enemies, time):
     for e in  enemies:
-        moveEnemy(e)
+        moveEnemy(e, time)
 
 #--- END ENNEMIES ---#
 
@@ -581,7 +581,7 @@ def initializeSpawners():
             spawnController['spawner'].append(spawner)
     # jusqu'ici je pense
 
-def control():
+def control(time):
     global spawnController, oldTime, deltaTime
 
     initializeSpawners()
@@ -614,8 +614,8 @@ def control():
             spawnController['spawnIndex'] = 0
             #spawnController['waveIndex'] += 1
             
-    deltaTime = pygame.time.get_ticks()-oldTime
-    oldTime   = pygame.time.get_ticks()
+    deltaTime = time-oldTime
+    oldTime   = time
     spawnController['timeElapsed'] +=  deltaTime
 
     
@@ -774,17 +774,17 @@ while not finished:
         
         
         # actions
-        control()
+        control(current_time)
         moveProjectiles(Projectiles['EnemyTeam'])
         moveProjectiles(Projectiles['PlayerTeam'])
         destroyProjOutBound(Projectiles['EnemyTeam'])
         destroyProjOutBound(Projectiles['PlayerTeam'])
 
-        shipShoot(getPlayerShip(Player1), False)
-        enemiesShoot()
+        shipShoot(getPlayerShip(Player1), current_time, False)
+        enemiesShoot(current_time)
         movePlayer(Player1)
 
-        moveAllEnnemies(Enemies)
+        moveAllEnnemies(Enemies, current_time)
         collisionEnnemiesProjectile(Enemies, Projectiles['PlayerTeam'])
 
         if not isInvulnerable(Player1):
@@ -797,8 +797,8 @@ while not finished:
             updateInvulnerability(Player1, current_time)
         
         # display
-        displayEnemies(Enemies)
-        displayShip(getPlayerShip(Player1))
+        displayEnemies(Enemies, current_time)
+        displayShip(getPlayerShip(Player1), current_time)
         displayProjectiles(Projectiles['EnemyTeam'])
         displayProjectiles(Projectiles['PlayerTeam'])
         displayScore()
@@ -809,5 +809,6 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
+
 
 
