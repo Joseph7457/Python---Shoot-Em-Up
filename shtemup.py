@@ -47,7 +47,7 @@ ENEMY_WEAPON_COOLDOWN = 500
 ENEMY_PROJECTILE_SPEED = 20
 
 # Background
-BACKGROUND_SPEED = 10
+BACKGROUND_SPEED = 8
 
 #Animation and Images to load in bank
 ANIMATIONS_TO_LOAD = {
@@ -837,7 +837,7 @@ while not finished:
         inputManager(pygame.event.get())
 
         # erase
-        window.fill(BLACK)
+        window.fill('midnightblue')
         BG()
       
         
