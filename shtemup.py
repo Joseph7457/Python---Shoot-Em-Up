@@ -53,7 +53,7 @@ BACKGROUND_SPEED = 10
 ANIMATIONS_TO_LOAD = {
 # format:
 #   'name'            : (nImages, 'ext', size                     ),
-    'ClusterExplosion': (11     , 'png', [48, 48]                 ),
+
     'player1_base'    : (10     , 'png', [80, 80]                 ),
     'enemy1_base'     : (10     , 'png', [80, 80]                 ),
     'skinA'           : (19     , 'png', [123, 194]               ),
@@ -62,8 +62,8 @@ IMAGES_TO_LOAD = {
 # format:
 #   'name'            : (ext   , [sizeX, sizeY]                   ),
     'missing_texture' : ('jpeg', [400, 400]                       ),
-    'backGround_1'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
-    'backGround_2'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
+    'backGround_1'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
+    'backGround_2'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
 }
 
 # Definition of every wave
@@ -158,6 +158,7 @@ def getFixedImage(imageName):
 def addAnimationToBank(animationName, nImages, ext, imageScale):
     ImageBank['animated'][animationName] = []
     for i in range(nImages):
+        print(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext)
         image = pygame.image.load(ANIMATION_PATH + animationName + '_' + str(i) + '.' + ext).convert_alpha(window)
         ImageBank['animated'][animationName].append(pygame.transform.scale(image, (imageScale[X], imageScale[Y])))
 
@@ -744,7 +745,7 @@ def inputManager(events):
 #--- BACKGROUND ---#
 # Background
 BGx = 0
-BGy = [0, -WINDOW_SIZE[1]]
+BGy = [-7*WINDOW_SIZE[1], -15*WINDOW_SIZE[1]]
 
 def BG():
     moveBG()
@@ -763,9 +764,9 @@ def moveBG():
 
 def reinitialiseBG():
     if(BGy[0]>WINDOW_SIZE[1]):
-        BGy[0] = - WINDOW_SIZE[1]
+        BGy[0] = -15*WINDOW_SIZE[1]
     if(BGy[1]>WINDOW_SIZE[1]):
-        BGy[1] = - WINDOW_SIZE[1]
+        BGy[1] = -15*WINDOW_SIZE[1]
 
 #--- END BACKGROUND ---#
 
@@ -836,9 +837,9 @@ while not finished:
         inputManager(pygame.event.get())
 
         # erase
-        #window.fill(BLACK)
-        #BG()
         window.fill(BLACK)
+        BG()
+      
         
         
         # actions
