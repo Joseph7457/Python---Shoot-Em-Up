@@ -15,3 +15,29 @@ Et différents timing de tir
 ex: munition = ..., munitionMax = x; cdEntreTir = ...; cdRechargement = ...;
 (pour des rafales de x tirs)
 
+ajout hitboxSize [] dans les entités ou dans les ennemis
+Ajout d'une fonction montrer hitbox pour faciliter le développement
+
+
+Bug de tir avec les skns, ce n'est pas centré.
+Pourtant à part, les skins sont tous centrés et croppés du coup c'est bizare 
+
+J'ai essayé ça 
+
+    if Ship['isShooting']:
+    
+        print("\n\n Le vaisseau est : \n")
+        print(Ship['entity']['currImage'])
+        
+        
+        w = Ship['entity']['currImage'].get_width()
+        h = Ship['entity']['currImage'].get_height()
+        
+        pos = [w/2,h]
+        pos[0] += getPos(getShipEntity(Ship))[0]
+        pos[1] += getPos(getShipEntity(Ship))[1]
+        
+        weaponShoot(Ship['weapons'][Ship['weaponInUse']], getPos(getShipEntity(Ship)), time)
+      
+Mais nope
+
