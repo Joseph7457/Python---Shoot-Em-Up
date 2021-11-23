@@ -2,9 +2,12 @@
 https://trello.com/b/1NyyOuI3/shootem-up
 """
 
+from ctypes.wintypes import RGB
 import pygame
 import math
 import json
+
+from pygame import color
 
 
 # --- To make code more readable
@@ -23,8 +26,8 @@ SOUND_EFFECT_PATH = 'sounds/soundEffects/'
 MUSIC_PATH = 'sounds/musics/'
 
 # definition of colors
-BLACK  = (  0, 0, 0); 
-WHITE = (  255, 255, 255);
+BLACK  = (  0, 0, 0)
+WHITE = (  255, 255, 255)
 MIDNIGHT_BLUE = (25, 25, 120)
 
 # player 1 parameters
@@ -50,12 +53,11 @@ Projectiles = {
 }
 
 #Ennemies
-ENEMY_SIZE = [125, 200]
 ENEMY_WEAPON_COOLDOWN = 500
 ENEMY_PROJECTILE_SPEED = 20
 
 # Background
-BACKGROUND_SPEED = 8
+BACKGROUND_SPEED = 7
 
 #Animation and Images to load in bank
 ANIMATIONS_TO_LOAD = {
@@ -271,6 +273,7 @@ def displayEntity(entity, currTime):
         if shouldAnimate(entity['animations'][entity['currAnimation']], currTime):
             entity['currImage'] = pygame.transform.scale(getNextAnimationFrame(entity['animations'][entity['currAnimation']], currTime), entity['size'])
     window.blit(entity['currImage'], entity['position']) #[X] - entity['size'][X]//2, entity['position'][Y]- entity['size'][Y]//2])
+    #pygame.draw.circle(window, RGB(255,0,0), entity['position'], 10, width=0) # Optionel. Outil de dev
 
 #--- END ENTITY ---#
 
@@ -418,6 +421,14 @@ def switchWeapon(Ship, index = -1):
 def shipShoot(Ship, time):
     # TODO add offset to weapon & way to change projectile direction
     if Ship['isShooting']:
+        print("\n\n Le vaisseau est : \n")
+        print(Ship['entity']['currImage'])
+        w = Ship['entity']['currImage'].get_width()
+        h = Ship['entity']['currImage'].get_height()
+        pos = [w/2,h]
+        pos[0] += getPos(getShipEntity(Ship))[0]
+        pos[1] += getPos(getShipEntity(Ship))[1]
+        # pygame.draw.circle(window, RGB(255,0,0), pos, 15, width=0) #Optionel, outil de dev
         weaponShoot(Ship['weapons'][Ship['weaponInUse']], getPos(getShipEntity(Ship)), time)
 
 
@@ -657,7 +668,7 @@ def control(time):
 
             
                                     
-            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blasterShot'], [ENEMY_SIZE[X]//2, ENEMY_SIZE[Y]] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN)
+            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN)
             startShipShooting(getEnemyShip(newEnemy))
 
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
