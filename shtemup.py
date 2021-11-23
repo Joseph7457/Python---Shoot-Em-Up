@@ -4,6 +4,8 @@ https://trello.com/b/1NyyOuI3/shootem-up
 
 import pygame
 import math
+import json
+
 
 # --- To make code more readable
 X = 0; Y = 1
@@ -73,39 +75,7 @@ IMAGES_TO_LOAD = {
 }
 
 # Definition of every wave
-
-def setAllWave():
-
-    allWaveData = []
-
-
-
-    t = [1000, 2000, 0, 1000 ];
-    x = [WIDTH/2, WIDTH/4, 3*WIDTH/4, WIDTH/2 ];
-    y = [-250, -250, -250, -250 ];
-    s = [5, 6, 6, 5 ];
-    typeMov = ["VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL" ];
-    skin = ["skinA", "skinA", "skinA", "skinA" ];
-    oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s), oneWaveData.append(skin)
-    allWaveData.append(oneWaveData)
-
-
-    t = [1000, 2000, 0, 1000 ];
-    x = [WIDTH/2, WIDTH/4, 3*WIDTH/4, WIDTH/2 ];
-    y = [-250, -250, -250, -250 ];
-    s = [5, 6, 6, 5 ];
-    typeMov = ["VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL" ];
-    skin = ["skinA", "skinA", "skinA", "skinA" ];
-    oneWaveData = []
-    oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s), oneWaveData.append(skin)
-    allWaveData.append(oneWaveData)
-
-
-
-    return allWaveData
-
-allWaveData = setAllWave()
+niveau_1 = ["data.json", "data.json", "data.json"]
 
 
 pygame.init()
@@ -214,7 +184,7 @@ def shouldAnimate(animation, currTime):
 
 #--- ENTITY ---#
 
-def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
+def createEntity(width = 10 , height = 10, x=0, y=0, speed = 0, scale = 1):
     return {
         'position': [x, y],
         'direction': [0,0], # normalized
@@ -224,6 +194,7 @@ def createEntity(width, height, x=0, y=0, speed = 0, mT = ""):
         'isAnimated' : False,
         'animations' : {},
         'currAnimation' : None,
+        'scale': scale 
     }
 
     #Getters
@@ -447,7 +418,7 @@ def shipMove(Ship):
 #--- ENEMIES ---#
 Enemies = []
 
-def createEnemy(ship, moveType):
+def createEnemy(ship, moveType = ""):
     return {
         'ship' : ship,
         'initPos' : [0,0],
@@ -495,7 +466,7 @@ def displayEnemy(enemy, time):
     displayShip(enemy['ship'], time)
     
 def displayEnemies(enemies, time):
-    for enemy in Enemies:
+    for enemy in enemies:
         displayEnemy(enemy, time)
         
 def enemiesShoot(time):
@@ -625,49 +596,62 @@ def createSpawnController():
         'timeElapsed': 0
     } 
 
-def createSpawner(t, w, x, y, s, skin):
-    return{
-        'type'   : w,
-        'timer'  : t,
-        'x'      : x,
-        'y'      : y,
-        'speed'  : s,
-        'skin'   : skin
-    }
 
-def initializeSpawners():
+
+def initializeSpawners(nomFichier):
     global spawnController
-    # celle  ci il faudrait l'extraire , elle fait part de l'initialisation
+
     if (spawnController == 0):
-        spawnController = createSpawnController()
-        # allWaveData [Vague][type de données][index 
-        for w in range(len(allWaveData)):
-            spawner = createSpawner(allWaveData[w][0], allWaveData[w][1],allWaveData[w][2], allWaveData[w][3], allWaveData[w][4], allWaveData[w][5])
-            spawnController['spawner'].append(spawner)
-    # jusqu'ici je pense
+        spawnController = createSpawnController()           # Création du controller
+
+        for w in range(len(nomFichier)):                    # Ajouter toutes les vagues du niveau
+
+            with open(nomFichier[0], "r") as read_file:        # Importation des données 
+                vague = json.load(read_file)
+            spawnController['spawner'].append(vague)
+ 
 
 def control(time):
     global spawnController, oldTime, deltaTime
 
-    initializeSpawners()
-
+    initializeSpawners(niveau_1)
     if (len (spawnController['spawner']) > 0):
     
-        if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ):
-            wi = spawnController['waveIndex']; i = spawnController['spawnIndex']
+        if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ): # ok
 
-            newEnemy = createEnemy(createShip(createEntity( ENEMY_SIZE[X], ENEMY_SIZE[Y], 
-                                                            spawnController['spawner'][wi]['x'][i], 
-                                                            spawnController['spawner'][wi]['y'][i],
-                                                            spawnController['spawner'][wi]['speed'][i],
-                                                            )), 
-                                    spawnController['spawner'][wi]['type'][i] )
+            wi = spawnController['waveIndex']; i = spawnController['spawnIndex']                                      # i et wi pour confort de lecture
+
+
+            scale = spawnController['spawner'][wi]['scale'][i]                                                        #ok
+
+            w = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_width()*scale)            #ok
+            h = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_height()*scale)
+            print ( "la largeur est de " + str(w))  
+            print ( "la hauteur est de " + str(h))
+
+            newEnemy = createEnemy(createShip(createEntity(w,h)))
+
+            # Mouvement 
+            moveType = spawnController['spawner'][wi]['moveType'][i]
+            newEnemy['moveType'] = moveType
+
+            # Vitesse
+            speed = spawnController['spawner'][wi]['speed'][i]
+            newEnemy['ship']['entity']['speed'] = speed
+
+            #Position
+            position = [spawnController['spawner'][wi]['x'][i],    spawnController['spawner'][wi]['y'][i]]
+            newEnemy['ship']['entity']['position'] = position
+
+            
+                                    
             addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blasterShot'], [ENEMY_SIZE[X]//2, ENEMY_SIZE[Y]] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN)
             startShipShooting(getEnemyShip(newEnemy))
 
-            addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)
+            addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
+            print(newEnemy)
             addEnemy(newEnemy)  
-                                #spawnController['spawner'][0]['type'][spawnController['spawnIndex']]
+
             spawnController['timeElapsed'] = 0
             spawnController['spawnIndex'] += 1
     
@@ -794,7 +778,8 @@ def displayLives():
 def restart():
     global spawnController, score
     spawnController = 0    
-    initializeSpawners()
+    initializeSpawners(niveau_1
+    )
     setPosition(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_START_POS)
 
     Enemies.clear()
