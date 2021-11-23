@@ -34,7 +34,7 @@ PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 INVULNERABILITY_DURATION = 500 # in ms
-LIVES_AT_START = 3
+LIVES_AT_START = 30
 
 #Projectiles
     # declare your projectiles here first then create a weapon based on it
@@ -65,6 +65,18 @@ ANIMATIONS_TO_LOAD = {
     'player1_base'    : (10     , 'png', [80, 80]                 ),
     'enemy1_base'     : (10     , 'png', [80, 80]                 ),
     'skinA'           : (19     , 'png', [123, 194]               ),
+    'V0'              : (8      , 'png', [128, 128]               ), 
+    'V1'              : (5      , 'png', [192, 128]               ), 
+    'V2'              : (35     , 'png', [152, 180]               ), 
+    'V3'              : (27     , 'png', [111, 192]               ), 
+    'V4'              : (62     , 'png', [256, 256]               ), 
+    'V5'              : (13     , 'png', [256, 256]               ), 
+    'V6'              : (35     , 'png', [224, 180]               ), 
+    'V7'              : (4      , 'png', [224, 228]               ), 
+    'V8'              : (9      , 'png', [120, 112]               ),
+    'V9'              : (27     , 'png', [256, 256]               ),  
+    'V10'             : (17     , 'png', [128, 112]               ),
+    'V11'             : (1      , 'png', [128, 128]               ),
 }
 IMAGES_TO_LOAD = {
 # format:
