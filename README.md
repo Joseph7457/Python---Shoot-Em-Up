@@ -6,6 +6,7 @@ Comme ça je peux créer différentes vagues dans différentes sauvegardes json 
 Peut-être tirer size [] du dictionnaire des images.
 Laisser python se charger de calculer la taille selon le fichier automatiquement par appel d'une fonction?
 C'est plus facile de changer la taille avec un facteur scale associé aux ennemis des vagues
+Edit: mauvaise idée. C'est mieux que je puisse corriger manuellement la taille des skins
 
 Différents types de tir? :
 Unique, double diagonale, laser? 
