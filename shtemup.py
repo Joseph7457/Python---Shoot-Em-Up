@@ -21,10 +21,12 @@ SOUND_EFFECT_PATH = 'sounds/soundEffects/'
 MUSIC_PATH = 'sounds/musics/'
 
 # definition of colors
-BLACK  = (  0, 0, 0); WHITE = (  255, 255, 255)
+BLACK  = (  0, 0, 0); 
+WHITE = (  255, 255, 255);
+MIDNIGHT_BLUE = (25, 25, 120)
 
 # player 1 parameters
-PLAYER1_SHIP_SIZE  = 80
+PLAYER1_SHIP_SIZE  = [80, 80]
 PLAYER1_SHIP_SPEED = 10
 PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
@@ -33,12 +35,16 @@ INVULNERABILITY_DURATION = 500 # in ms
 LIVES_AT_START = 3
 
 #Projectiles
-PROJECTILE_SPEED   = 20
-projectiles_axe    = 1
-PROJECTILE_SIZE    = 4
+    # declare your projectiles here first then create a weapon based on it
+PROJECTILE_BLUEPRINTS = {
+   #'projectileName' : (size    , 'Animation'    , 'AnimationOnHit'    , onHitSize, speed, movementType, projectileDamage),
+    'blasterShot'    : ([15, 15], 'enemy1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
+}
+
 Projectiles = {
     'PlayerTeam' : [],
     'EnemyTeam' : [],
+    'toDestroy' : [],
 }
 
 #Ennemies
@@ -47,7 +53,7 @@ ENEMY_WEAPON_COOLDOWN = 500
 ENEMY_PROJECTILE_SPEED = 20
 
 # Background
-BACKGROUND_SPEED = 10
+BACKGROUND_SPEED = 8
 
 #Animation and Images to load in bank
 ANIMATIONS_TO_LOAD = {
@@ -62,8 +68,8 @@ IMAGES_TO_LOAD = {
 # format:
 #   'name'            : (ext   , [sizeX, sizeY]                   ),
     'missing_texture' : ('jpeg', [400, 400]                       ),
-    'backGround_1'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
-    'backGround_2'    : ('tif', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]  ),
+    'backGround_1'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
+    'backGround_2'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
 }
 
 # Definition of every wave
@@ -78,7 +84,7 @@ def setAllWave():
     x = [WIDTH/2, WIDTH/4, 3*WIDTH/4, WIDTH/2 ];
     y = [-250, -250, -250, -250 ];
     s = [5, 6, 6, 5 ];
-    typeMov = ["REBONDG", "REBONDD", "VERTICAL", "VERTICAL" ];
+    typeMov = ["VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL" ];
     skin = ["skinA", "skinA", "skinA", "skinA" ];
     oneWaveData = []
     oneWaveData.append(t);  oneWaveData.append(typeMov); oneWaveData.append(x); oneWaveData.append(y); oneWaveData.append(s), oneWaveData.append(skin)
@@ -198,6 +204,9 @@ def getNextAnimationFrame(animation, time):
     animation['timeSinceLastAnim'] = time
     return getAnimationFrame(animation['animationName'], animation['indexCurrImage'])
 
+def getCurrAnimationFrame(animation):
+    return animation['indexCurrImage']
+
 def shouldAnimate(animation, currTime):
     return animation['timeSinceLastAnim'] + animation['frameDuration'] < currTime
 
@@ -229,6 +238,10 @@ def getSpeed(entity):
 
 def getSize(entity):
     return entity['size']
+
+def getEntityCurrAnimationFrame(entity):
+    if entity['isAnimated']:
+        return getCurrAnimationFrame(entity['animations'][entity['currAnimation']])
 
     #Setters
 def setSpeed(entity, vecteur):
@@ -270,6 +283,7 @@ def move(entity):
     entity['position'][Y] += entity['direction'][Y] * entity['speed']
 
 def displayEntity(entity, currTime):
+    result = False
     if entity['isAnimated']:
         if shouldAnimate(entity['animations'][entity['currAnimation']], currTime):
             entity['currImage'] = pygame.transform.scale(getNextAnimationFrame(entity['animations'][entity['currAnimation']], currTime), entity['size'])
@@ -278,86 +292,117 @@ def displayEntity(entity, currTime):
 #--- END ENTITY ---#
 
 #--- PROJECTILE ---#
-def createProjectile(size, Animation, AnimationOnHit, AnimationOnHitDuration, speed, direction, movementType, projectileDamage, position):
-   projectileEntity = createEntity(size[X], size[Y], position[X], position[Y], speed)
-   setDirection(projectileEntity, direction[X], direction[Y])
-   addEntityAnimation(projectileEntity, 'standardAnimation', Animation, 0.4)
-   addEntityAnimation(projectileEntity, 'AnimationOnHit', AnimationOnHit, 0.4)
+def createProjectile(size, Animation, AnimationOnHit, onHitSize, speed, movementType, projectileDamage, direction, position):
+    projectileEntity = createEntity(size[X], size[Y], position[X], position[Y], speed)
+    setDirection(projectileEntity, direction[X], direction[Y])
+    addEntityAnimation(projectileEntity, 'standardAnimation', Animation, 0.4)
+    addEntityAnimation(projectileEntity, 'AnimationOnHit', AnimationOnHit, 0.4)
 
-   return {
-      'entity' : projectileEntity,
-      'damage' : projectileDamage,
-      'movementType' : movementType,
-      'onHitDuration' : AnimationOnHitDuration,
-   }
+    return {
+        'entity' : projectileEntity,
+        'onHitSize' : onHitSize,
+        'damage' : projectileDamage,
+        'movementType' : movementType,
+    }
 
-def projectileOnHit(projectile, currTime):
-   switchEntityAnimation(projectile['entity'], 'animationOnHit')
-   setSpeed(projectile['entity'], 0)
-   Projectiles['toDestroy'].append((projectile, currTime))
+def projectileOnHit(projectiles, index):
+    switchEntityAnimation(projectiles[index]['entity'], 'AnimationOnHit')
+    setSpeed(projectiles[index]['entity'], 0)
+    resizeEntity(projectiles[index]['entity'], *projectiles[index]['onHitSize'])
+    position = getPos(projectiles[index]['entity']) 
+    position[X] -= projectiles[index]['onHitSize'][X]//2
+    position[Y] -= projectiles[index]['onHitSize'][Y]//2
+    setPosition(projectiles[index]['entity'], position)
+    Projectiles['toDestroy'].append(projectiles[index])
    
 def addProjectile(projectileTeam, projectile):
-   Projectiles.append(projectile)
+   Projectiles[projectileTeam].append(projectile)
 
-def moveProjectiles(projectileTeam):
-   for projectile in Projectiles[projectileTeam]:
-      move(projectile['entity'])
+def moveProjectiles(projectiles):
+    for projectile in projectiles:
+        move(projectile['entity'])
 
-def displayProjectiles(projectileTeam, currTime):
-   for projectile in Projectiles[projectileTeam]:
+def displayProjectiles(projectiles, currTime):
+   for projectile in projectiles:
       displayEntity(projectile['entity'], currTime)
 
-def updateProjectilesToDestroy(currTime):
-   projectilesToRemove = []
-   for i in range(len(Projectiles['toDestroy'])):
-      if(Projectiles['toDestroy'][i][1] + Projectiles['toDestroy'][i]['onHitDuration'] * 1000 > currTime):
-         projectilesToRemove.append(i)
+def updateProjectilesToDestroy():
+    projectilesIndexToRemove = []
+    for i in range(len(Projectiles['toDestroy'])):
+        if(not getEntityCurrAnimationFrame(Projectiles['toDestroy'][i]['entity'])):
+            projectilesIndexToRemove.append(i)
+      
+    removeFromList(Projectiles['toDestroy'], projectilesIndexToRemove)
 
-   removeFromList(Projectiles['toDestroy'], projectilesToRemove)
+def destroyProjOutBound(projectiles):
+    toRemove = []
+    for i in range(len(projectiles)-1):
+        pos = getPos(projectiles[i]['entity'])
+        if pos[Y] < 0 or pos[Y] > WINDOW_SIZE[Y] or pos[X] < 0 or pos[X] > WINDOW_SIZE[X]:
+            toRemove.append(i)
+
+    removeFromList(projectiles, toRemove)
+
+
 
 #--- END PROJECTILE ---#
 
 
 #--- WEAPON ---#
-def createWeapon(projectileBP, ownerTeam, cooldown):
-   return {
-      'projectile' : projectileBP,
-      'ownerTeam' : ownerTeam,
-      'cooldown' : cooldown,
-      'lastShot' : 0,
-   }
+def createWeapon(projectileBP, offset, ownerTeam, cooldown):
+    return {
+        'projectileSize' : projectileBP[0],
+        'projectileAnimation' : projectileBP[1],
+        'projectileOnHitAnimation' : projectileBP[2],
+        'projectileOnHitSize' : projectileBP[3],
+        'projectileSpeed' : projectileBP[4],
+        'projectileMoveType' : projectileBP[5],
+        'projectileDamage' : projectileBP[6],
+        'offset' : offset,
+        'ownerTeam' : ownerTeam,
+        'cooldown' : cooldown,
+        'lastShot' : 0,
+    }
 
-def weaponShoot(weapon, position, currTime):
+def setWeaponDamage(weapon, damage):
+    weapon['projectileDamage'] = damage
 
-   return
+def setWeaponProjSpeed(weapon, speed):
+    weapon['projectileSpeed'] = speed    
 
+def setWeaponCooldown(weapon, cooldown):
+    weapon['cooldown'] = cooldown
+
+def weaponShoot(weapon, position, currTime, direction = None):
+    if(currTime - weapon['lastShot'] >= weapon['cooldown']):
+        if(not direction):
+            if weapon['ownerTeam'] == 'PlayerTeam':
+                direction = [0, -1]
+            else:
+                direction = [0, 1]
+        addProjectile(weapon['ownerTeam'], createProjectile(weapon['projectileSize'], weapon['projectileAnimation'],
+                                                            weapon['projectileOnHitAnimation'], weapon['projectileOnHitSize'],
+                                                            weapon['projectileSpeed'], weapon['projectileMoveType'], 
+                                                            weapon['projectileDamage'], direction, 
+                                                            [position[X] + weapon['offset'][X]-weapon['projectileSize'][X]//2, position[Y] + weapon['offset'][Y]-weapon['projectileSize'][Y]//2]))
+        weapon['lastShot'] = currTime
 
 #--- END WEAPON ---#
 
 
 #--- SHIPS ---#
 
-def createShip(entity, weaponCooldown = 200, shootingDirectionX = 0, shootingDirectionY = 1, isShooting = False):
+def createShip(entity, isShooting = False):
     return {
         'entity' : entity,
-        'shootingCooldown' : weaponCooldown,
-        'timeLastShot' : 0,
-        'shootingDirection' : [shootingDirectionX, shootingDirectionY], #vector director [x, y] normalized
-        'isShooting' : isShooting
+        'isShooting' : isShooting,
+        'weapons' : [],
+        'weaponInUse' : 0,
     }
 
     # getters
 def getShipEntity(Ship):
     return Ship['entity']
-
-def getShipShootingCooldown(Ship):
-    return Ship['shootingCooldown']
-
-def getShipTimeLastShot(Ship):
-    return Ship['timeLastShot']
-
-def getShipShootingDirection(Ship):
-    return Ship['shootingDirection']
 
 def isShipShooting(Ship):
     return Ship['isShooting']
@@ -366,15 +411,6 @@ def isShipShooting(Ship):
 def setShipEntity(Ship, entity):
     Ship['entity'] = entity
 
-def setShipShootingCooldown(Ship, newCooldown):
-    Ship['shootingCooldown'] = newCooldown
-
-def setShipTimeLastShot(Ship, time):
-    Ship['timeLastShot'] = time
-
-def setShipShootingDirection(Ship, directionX, directionY):
-    Ship['shootingDirection'] = [directionX, directionY]
-
 def stopShipShooting(Ship):
     Ship['isShooting'] = False
 
@@ -382,43 +418,25 @@ def startShipShooting(Ship):
     Ship['isShooting'] = True
 
     # Methods
+def addWeaponToShip(Ship, projectileBP, weaponOffset, ownerTeam, cooldown):
+    Ship['weapons'].append(createWeapon(projectileBP, weaponOffset, ownerTeam, cooldown))
+
 def displayShip(Ship, time):
     displayEntity(getShipEntity(Ship), time)
 
-def shipShoot(Ship, time, isEnemy = True):
-    if((isShipShooting(Ship)) and (time - getShipTimeLastShot(Ship) >= getShipShootingCooldown(Ship))):
+def switchWeapon(Ship, index = -1):
+    if(Ship['weapons']):
+        if index == -1:
+            Ship['weaponInUse'] = (Ship['weaponInUse'] + 1)%len(Ship['weapons']) 
+        else :
+            if index < len(Ship['weapons']):
+                Ship['weaponInUse'] = index
 
-        setShipTimeLastShot(Ship, time)
+def shipShoot(Ship, time):
+    # TODO add offset to weapon & way to change projectile direction
+    if Ship['isShooting']:
+        weaponShoot(Ship['weapons'][Ship['weaponInUse']], getPos(getShipEntity(Ship)), time)
 
-        shipPos = getPos(getShipEntity(Ship))
-        shipSize = getSize(getShipEntity(Ship))
-
-        newProjectile = createEntity(PROJECTILE_SIZE*2, PROJECTILE_SIZE*2)
-        direction = getShipShootingDirection(Ship)
-        setDirection(newProjectile, direction[X], direction[Y])
-
-        # Calcul de la position de départ du projectile
-
-        posY = shipPos[Y] + shipSize[Y]//2
-        if direction[Y] < 0:
-            posY = shipPos[Y]
-        elif direction[Y] > 0:
-            posY = shipPos[Y] + shipSize[Y]
-
-        posX = shipPos[X] + (shipSize[X]//2)
-        if direction[X] < 0:
-            posX = shipPos[X]
-        elif direction[X] > 0:
-            posX = shipPos[X] + shipSize[X]
-
-        setPosition(newProjectile, (shipPos[X] + (shipSize[X]//2)+(shipSize[X]//2)*direction[X], posY ))
-
-        if isEnemy:
-            setSpeed(newProjectile, ENEMY_PROJECTILE_SPEED)
-            Projectiles['EnemyTeam'].append(newProjectile)
-        else:
-            setSpeed(newProjectile, PROJECTILE_SPEED)
-            Projectiles['PlayerTeam'].append(newProjectile)
 
 def shipMove(Ship):
     move(Ship['entity'])
@@ -458,7 +476,7 @@ def moveEnemy(enemy, time):
         while(t>1000):
             t -= 1000
         d = reMap(t, 0,1000, 0, math.pi/2)
-        setDirection(getShipEntity(enemy['ship']), *angleToCoords(d))
+        setDirection(getShipEntity(enemy['ship']), angleToCoords(d))
     shipMove(enemy['ship'])
 
 def getEnemyShip(Enemy):
@@ -557,23 +575,24 @@ def collision_entite(entite1, entite2):
 # Deletes enemies and projectiles who collide
 def collisionEnnemiesProjectile(enemies, projectiles):
     global score
-    indexProjectileToDestroy = []
     indexEnemiesToDestroy = []
+    indexProjectileToDestroy = []
 
     for i in range(len(projectiles)):
         hasCollided = False
         j = 0
         while((j < len(enemies)) and (not hasCollided)): # stop the search if the projectile has already collided
-            if collision_entite(projectiles[i], getShipEntity(getEnemyShip(enemies[j]))):
-                indexProjectileToDestroy.append(i)
+            if collision_entite(projectiles[i]['entity'], getShipEntity(getEnemyShip(enemies[j]))):
                 indexEnemiesToDestroy.append(j)
+                indexProjectileToDestroy.append(i)
                 hasCollided = True
                 score += 1
+                projectileOnHit(projectiles, i)
             j = j + 1
 
     # Removing projectiles and enemies that has collided
-    removeFromList(projectiles, indexProjectileToDestroy) 
     removeFromList(enemies, indexEnemiesToDestroy)
+    removeFromList(projectiles, indexProjectileToDestroy)
     
 # Returns True if the player collides with an enemy
 def collisionPlayerEnnemies(player, enemies):
@@ -583,31 +602,14 @@ def collisionPlayerEnnemies(player, enemies):
     return False
 
 # Returns True if the player collides with a projectile from a list
-def collisionPlayerProjectile(player, projectiles):    
-    for enemy in projectiles:
-        if collision_entite(enemy, getShipEntity(getPlayerShip(player))):
+def collisionPlayerProjectile(player, projectiles):
+    for projectileIndex in range(len(projectiles)):
+        if collision_entite(projectiles[projectileIndex]['entity'], getShipEntity(getPlayerShip(player))):
+            projectileOnHit(projectiles, projectileIndex)
+            removeFromList(projectiles, [projectileIndex])
             return True
     return False
 
-#--- PROJECTILE ---#
-def displayProjectiles(projectiles):
-    for projectile in projectiles:
-        pygame.draw.circle(window, WHITE, (int(getPos(projectile)[X]), int(getPos(projectile)[Y])), PROJECTILE_SIZE)
-
-def moveProjectiles(projectiles):
-    for projectile in projectiles:
-        move(projectile)
-
-def destroyProjOutBound(projectiles):
-    toRemove = []
-    for i in range(len(projectiles)-1):
-        pos = getPos(projectiles[i])
-        if pos[Y] < 0 or pos[Y] > WINDOW_SIZE[Y] or pos[X] < 0 or pos[X] > WINDOW_SIZE[X]:
-            toRemove.append(i)
-
-    removeFromList(projectiles, toRemove)
-
-#--- END PROJECTILE ---#
 
 #--- Control ---#
 spawner = []
@@ -660,10 +662,8 @@ def control(time):
                                                             spawnController['spawner'][wi]['speed'][i],
                                                             )), 
                                     spawnController['spawner'][wi]['type'][i] )
-
-            setShipShootingCooldown(getEnemyShip(newEnemy), ENEMY_WEAPON_COOLDOWN)
+            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blasterShot'], [ENEMY_SIZE[X]//2, ENEMY_SIZE[Y]] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN)
             startShipShooting(getEnemyShip(newEnemy))
-            setShipShootingDirection(getEnemyShip(newEnemy), 0,  1)            
 
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)
             addEnemy(newEnemy)  
@@ -682,10 +682,10 @@ def control(time):
     spawnController['timeElapsed'] +=  deltaTime
 
     
-Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE, PLAYER1_SHIP_SIZE, 
+Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE[X], PLAYER1_SHIP_SIZE[Y], 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
-                                               PLAYER1_SHIP_SPEED),
-                                  PLAYER1_WEAPON_COOLDOWN, 0, -1, False))
+                                               PLAYER1_SHIP_SPEED), False))
+addWeaponToShip(getPlayerShip(Player1), PROJECTILE_BLUEPRINTS['blasterShot'], [PLAYER1_SHIP_SIZE[X]//2, 0], 'PlayerTeam', PLAYER1_WEAPON_COOLDOWN)
 addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'Skin_Base', 'player1_base', 0.4)
 
 leftInput = 0
@@ -744,7 +744,7 @@ def inputManager(events):
 #--- BACKGROUND ---#
 # Background
 BGx = 0
-BGy = [0, -WINDOW_SIZE[1]]
+BGy = [-7*WINDOW_SIZE[1], -15*WINDOW_SIZE[1]]
 
 def BG():
     moveBG()
@@ -763,9 +763,9 @@ def moveBG():
 
 def reinitialiseBG():
     if(BGy[0]>WINDOW_SIZE[1]):
-        BGy[0] = - WINDOW_SIZE[1]
+        BGy[0] = -15*WINDOW_SIZE[1]
     if(BGy[1]>WINDOW_SIZE[1]):
-        BGy[1] = - WINDOW_SIZE[1]
+        BGy[1] = -15*WINDOW_SIZE[1]
 
 #--- END BACKGROUND ---#
 
@@ -836,9 +836,9 @@ while not finished:
         inputManager(pygame.event.get())
 
         # erase
-        #window.fill(BLACK)
-        #BG()
-        window.fill(BLACK)
+        window.fill(MIDNIGHT_BLUE)
+        BG()
+      
         
         
         # actions
@@ -848,7 +848,7 @@ while not finished:
         destroyProjOutBound(Projectiles['EnemyTeam'])
         destroyProjOutBound(Projectiles['PlayerTeam'])
 
-        shipShoot(getPlayerShip(Player1), current_time, False)
+        shipShoot(getPlayerShip(Player1), current_time)
         enemiesShoot(current_time)
         movePlayer(Player1)
 
@@ -867,8 +867,10 @@ while not finished:
         # display
         displayEnemies(Enemies, current_time)
         displayShip(getPlayerShip(Player1), current_time)
-        displayProjectiles(Projectiles['EnemyTeam'])
-        displayProjectiles(Projectiles['PlayerTeam'])
+        displayProjectiles(Projectiles['EnemyTeam'], current_time)
+        displayProjectiles(Projectiles['PlayerTeam'], current_time)
+        displayProjectiles(Projectiles['toDestroy'], current_time)
+        updateProjectilesToDestroy()
         displayScore()
         displayLives()
         pygame.display.flip()
