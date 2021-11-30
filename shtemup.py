@@ -105,6 +105,9 @@ niveau_1 = ["vague1.json", "vague2.json", "vague3.json", "data.json"]
 
 
 
+# Menu buttons
+buttons = []
+
 #--- utility function ---#
 def normalize2dVector(x, y):
     if not x and not y:
@@ -202,6 +205,30 @@ def shouldAnimate(animation, currTime):
     return animation['timeSinceLastAnim'] + animation['frameDuration'] < currTime
 
 #--- END ANIMATION ---#
+
+#--- BUTTON ---#
+
+def createButton(image, position, size, levelIndex):
+    return {
+        'image': image,
+        'position': position,
+        'rect': pygame.Rect(position, size),
+        'levelIndex': levelIndex
+    }
+
+def displayButton(button):
+    window.blit(button['image'], button['position'])
+
+def checkButtonsCollisions(position):
+    for button in buttons:
+        if button['rect'].collidepoint(position):
+            loadLevel(button['levelIndex'])
+    return False
+
+def loadLevel(levelIndex):
+    print('levelIndex')
+
+#--- END BUTTON ---#
 
 #--- ENTITY ---#
 
@@ -803,8 +830,7 @@ def displayLives():
 def restart():
     global spawnController, score
     spawnController = 0    
-    initializeSpawners(niveau_1
-    )
+    initializeSpawners(niveau_1)
     setPosition(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_START_POS)
 
     Enemies.clear()
