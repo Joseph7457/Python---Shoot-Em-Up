@@ -2,7 +2,6 @@
 https://trello.com/b/1NyyOuI3/shootem-up
 """
 
-from ctypes.wintypes import RGB
 import pygame
 import math
 import json
@@ -733,8 +732,8 @@ def inputManager(events):
                     setShipShootingDirection(getPlayerShip(Player1), 0, 1)
 
             if event.key == pygame.K_ESCAPE:
-                finished = True
                 playing = False
+                restart()
         
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_q or event.key == pygame.K_LEFT:
@@ -833,8 +832,11 @@ while not finished:
             finished = True
 
         if event.type == pygame.KEYDOWN :
-            playing = True
-            resetPlayerInput(Player1)
+            if event.key == pygame.K_ESCAPE:
+                finished = True
+            else:
+                playing = True
+                resetPlayerInput(Player1)
 
     window.fill(BLACK)
     displayMenu()
@@ -890,6 +892,7 @@ while not finished:
 
 pygame.display.quit()
 pygame.quit()
+
 
 
 
