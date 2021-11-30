@@ -9,14 +9,18 @@ import json
 
 from pygame import color
 
+pygame.init()
+
 
 # --- To make code more readable
 X = 0; Y = 1
 
 # window size
-WINDOW_SIZE = [1600, 900]
+WINDOW_SIZE = [1920, 1080]
 HEIGHT = WINDOW_SIZE[1]
 WIDTH  = WINDOW_SIZE[0]
+W = WIDTH
+H = HEIGHT
 REFRESH_RATE = 60
 
 #paths
@@ -30,8 +34,12 @@ BLACK  = (  0, 0, 0)
 WHITE = (  255, 255, 255)
 MIDNIGHT_BLUE = (25, 25, 120)
 
+# INIT 
+window = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
+window.fill(BLACK)
+
 # player 1 parameters
-PLAYER1_SHIP_SIZE  = [80, 80]
+PLAYER1_SHIP_SIZE  = [123, 194] 
 PLAYER1_SHIP_SPEED = 10
 PLAYER1_SHIP_OFFSET = 100
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
@@ -86,15 +94,15 @@ IMAGES_TO_LOAD = {
     'missing_texture' : ('jpeg', [400, 400]                       ),
     'backGround_1'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
     'backGround_2'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
+    'BLACKfond1'      : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
+    'BLACKfond2'      : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
 }
 
 # Definition of every wave
-niveau_1 = ["data.json", "data.json", "data.json"]
+niveau_1 = ["vague1.json", "vague2.json", "vague3.json", "data.json"]
 
 
-pygame.init()
-window = pygame.display.set_mode(WINDOW_SIZE)
-window.fill(BLACK)
+
 
 
 
@@ -304,7 +312,7 @@ def projectileOnHit(projectiles, index):
 def addProjectile(projectileTeam, projectile):
    Projectiles[projectileTeam].append(projectile)
 
-def moveProjectiles(projectiles):
+def moveProjectiles(projectiles):         # Il faudrait appel d'une fonction définir vitesse projectile pour changer les composantes de la vitesse du projectile selon le type de tir. Peut-être en dehors du bloc pour gérer ça globalement
     for projectile in projectiles:
         move(projectile['entity'])
 
@@ -421,13 +429,7 @@ def switchWeapon(Ship, index = -1):
 def shipShoot(Ship, time):
     # TODO add offset to weapon & way to change projectile direction
     if Ship['isShooting']:
-        print("\n\n Le vaisseau est : \n")
-        print(Ship['entity']['currImage'])
-        w = Ship['entity']['currImage'].get_width()
-        h = Ship['entity']['currImage'].get_height()
-        pos = [w/2,h]
-        pos[0] += getPos(getShipEntity(Ship))[0]
-        pos[1] += getPos(getShipEntity(Ship))[1]
+
         # pygame.draw.circle(window, RGB(255,0,0), pos, 15, width=0) #Optionel, outil de dev
         weaponShoot(Ship['weapons'][Ship['weaponInUse']], getPos(getShipEntity(Ship)), time)
 
@@ -615,7 +617,7 @@ def createSpawnController():
     return{
         'spawnIndex' : 0,
         'waveIndex'  : 0,
-        'spawner' : [],
+        'spawner'    : [],
         'timeElapsed': 0
     } 
 
@@ -629,7 +631,7 @@ def initializeSpawners(nomFichier):
 
         for w in range(len(nomFichier)):                    # Ajouter toutes les vagues du niveau
 
-            with open(nomFichier[0], "r") as read_file:        # Importation des données 
+            with open(nomFichier[w], "r") as read_file:        # Importation des données 
                 vague = json.load(read_file)
             spawnController['spawner'].append(vague)
  
@@ -663,8 +665,9 @@ def control(time):
             newEnemy['ship']['entity']['speed'] = speed
 
             #Position
-            position = [spawnController['spawner'][wi]['x'][i],    spawnController['spawner'][wi]['y'][i]]
+            position = [spawnController['spawner'][wi]['x'][i] - w/2,    spawnController['spawner'][wi]['y'][i]- h]
             newEnemy['ship']['entity']['position'] = position
+            print("la position est de " + str(position))
 
             
                                     
@@ -693,7 +696,7 @@ Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE[X], PLAYER1_SHI
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED), False))
 addWeaponToShip(getPlayerShip(Player1), PROJECTILE_BLUEPRINTS['blasterShot'], [PLAYER1_SHIP_SIZE[X]//2, 0], 'PlayerTeam', PLAYER1_WEAPON_COOLDOWN)
-addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'Skin_Base', 'player1_base', 0.4)
+addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'skinA', 'skinA', 0.4)
 
 leftInput = 0
 rightInput = 0
@@ -759,8 +762,8 @@ def BG():
     displayBG()
 
 def displayBG():
-    window.blit(getFixedImage('backGround_1'), (BGx, BGy[0]))
-    window.blit(getFixedImage('backGround_2'), (BGx, BGy[1]))
+    window.blit(getFixedImage('BLACKfond2'), (BGx, BGy[0]))
+    window.blit(getFixedImage('BLACKfond1'), (BGx, BGy[1]))
     
 
 def moveBG():
@@ -844,7 +847,7 @@ while not finished:
         inputManager(pygame.event.get())
 
         # erase
-        window.fill(MIDNIGHT_BLUE)
+        window.fill(BLACK)
         BG()
       
         
