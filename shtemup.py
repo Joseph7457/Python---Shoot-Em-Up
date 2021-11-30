@@ -100,11 +100,6 @@ IMAGES_TO_LOAD = {
 # Definition of every wave
 niveau_1 = ["vague1.json", "vague2.json", "vague3.json", "data.json"]
 
-
-
-
-
-
 # Menu buttons
 buttons = []
 
@@ -226,7 +221,7 @@ def checkButtonsCollisions(position):
     return False
 
 def loadLevel(levelIndex):
-    print('levelIndex')
+    initializeSpawners(niveau_1)
 
 #--- END BUTTON ---#
 
@@ -847,6 +842,7 @@ temps = pygame.time.Clock()
 scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
+buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (200, 200), (128, 128), 1)) 
 
 finished   = False
 playing = False
@@ -864,8 +860,12 @@ while not finished:
                 playing = True
                 resetPlayerInput(Player1)
 
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            checkButtonsCollisions(event.pos)
+
     window.fill(BLACK)
     displayMenu()
+    displayButton(buttons[0])
     pygame.display.flip()
     
     while playing:
