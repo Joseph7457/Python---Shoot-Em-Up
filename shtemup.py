@@ -5,10 +5,12 @@ https://trello.com/b/1NyyOuI3/shootem-up
 import pygame
 import math
 import json
+import random
 
 from pygame import color
 
 pygame.init()
+current_time = pygame.time.get_ticks()
 
 
 # --- To make code more readable
@@ -34,7 +36,7 @@ WHITE = (  255, 255, 255)
 MIDNIGHT_BLUE = (25, 25, 120)
 
 # INIT 
-window = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
+window = pygame.display.set_mode(WINDOW_SIZE)
 window.fill(BLACK)
 
 # player 1 parameters
@@ -98,10 +100,13 @@ IMAGES_TO_LOAD = {
 }
 
 # Definition of every wave
-niveau_1 = ["vague1.json", "vague2.json", "vague3.json", "data.json"]
-
+levels = [["vague1.json", "vague2.json", "vague3.json", "data.json"],["data.json"]]
+randomLevel = ["vague1.json", "vague2.json", "vague3.json","data.json","data.json","data.json","data.json","data.json"]
+level = []
 # Menu buttons
 buttons = []
+levelIndex = 0
+
 
 #--- utility function ---#
 def normalize2dVector(x, y):
@@ -211,17 +216,28 @@ def createButton(image, position, size, levelIndex):
         'levelIndex': levelIndex
     }
 
-def displayButton(button):
-    window.blit(button['image'], button['position'])
+def displayButton():
+    for button in buttons:
+        window.blit(button['image'], button['position'])
 
 def checkButtonsCollisions(position):
+    global levelIndex
     for button in buttons:
-        if button['rect'].collidepoint(position):
+        levelIndex = button['levelIndex']
+        if button['rect'].collidepoint(position) and  levelIndex != 2:
             loadLevel(button['levelIndex'])
+            
     return False
 
-def loadLevel(levelIndex):
-    initializeSpawners(niveau_1)
+def loadLevel(lI):
+    global level, playing, spawnController, levelIndex
+    levelIndex = lI
+    level.clear() 
+    level = levels[levelIndex].copy()
+    spawnController = 0
+    print(level)
+    control(level)
+    playing = True
 
 #--- END BUTTON ---#
 
@@ -657,10 +673,11 @@ def initializeSpawners(nomFichier):
             spawnController['spawner'].append(vague)
  
 
-def control(time):
+def control(level):
     global spawnController, oldTime, deltaTime
 
-    initializeSpawners(niveau_1)
+    time = current_time
+    initializeSpawners(level)
     if (len (spawnController['spawner']) > 0):
     
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ): # ok
@@ -668,12 +685,12 @@ def control(time):
             wi = spawnController['waveIndex']; i = spawnController['spawnIndex']                                      # i et wi pour confort de lecture
 
 
-            scale = spawnController['spawner'][wi]['scale'][i]                                                        #ok
+            scale = spawnController['spawner'][wi]['scale'][i]*0.75                                                 #ok
 
             w = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_width()*scale)            #ok
             h = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_height()*scale)
-            print ( "la largeur est de " + str(w))  
-            print ( "la hauteur est de " + str(h))
+            #print ( "la largeur est de " + str(w))  
+            #print ( "la hauteur est de " + str(h))
 
             newEnemy = createEnemy(createShip(createEntity(w,h)))
 
@@ -688,7 +705,7 @@ def control(time):
             #Position
             position = [spawnController['spawner'][wi]['x'][i] - w/2,    spawnController['spawner'][wi]['y'][i]- h]
             newEnemy['ship']['entity']['position'] = position
-            print("la position est de " + str(position))
+            #print("la position est de " + str(position))
 
             
                                     
@@ -696,7 +713,7 @@ def control(time):
             startShipShooting(getEnemyShip(newEnemy))
 
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
-            print(newEnemy)
+            #print(newEnemy)
             addEnemy(newEnemy)  
 
             spawnController['timeElapsed'] = 0
@@ -825,7 +842,7 @@ def displayLives():
 def restart():
     global spawnController, score
     spawnController = 0    
-    initializeSpawners(niveau_1)
+    initializeSpawners(level)
     setPosition(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_START_POS)
 
     Enemies.clear()
@@ -842,7 +859,8 @@ temps = pygame.time.Clock()
 scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
-buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (200, 200), (128, 128), 1)) 
+buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (200, 200), (128, 128), 0)) 
+buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (600, 200), (128, 128), 2)) 
 
 finished   = False
 playing = False
@@ -865,8 +883,16 @@ while not finished:
 
     window.fill(BLACK)
     displayMenu()
-    displayButton(buttons[0])
+    displayButton()
     pygame.display.flip()
+
+    if (levelIndex == 2 ):
+            
+        while(len(level) < 5):
+            randomIndex = random.randint(0,5)
+            level.append(randomLevel[randomIndex])
+            playing = True
+            print(level)
     
     while playing:
 
@@ -881,7 +907,15 @@ while not finished:
         
         
         # actions
-        control(current_time)
+        if (levelIndex == 2 ):
+            
+            while(len(level) < 5):
+                randomIndex = randInt(random.randint(0,5))
+                level.append(randomLevel[randomIndex])
+                print(level)
+
+        control(level)
+        
         moveProjectiles(Projectiles['EnemyTeam'])
         moveProjectiles(Projectiles['PlayerTeam'])
         destroyProjOutBound(Projectiles['EnemyTeam'])
