@@ -1,0 +1,7 @@
+{"timer": [2000, 0   ,   0  ,    0,     0, 1500 ,0   , 0    ,0   ,  0 ,1000 ,0  ], 
+"x": 	  [960 , 760 , 1160 , 200 , 1720 , 960  ,760 , 1160 , 200, 1720, 300 ,1620   ], 
+"y":      [0   ,    0,    0,   0 , 0   , 0    , 0  , 0   , 0  , 0  , 0   , 0    ], 
+"speed":  [4   ,    4,    4,    4,   4 , 4    , 4  , 4    , 4 , 4  , 4   , 4    ], 
+"skin":   ["V14", "V14", "V14", "V14", "V14", "V14" ,"V14","V14","V14" ,"V14","V14", "V14"], 
+"scale":  [2   ,    2,    2,   2 , 2   , 2    , 2  ,  2 , 2   ,  2 , 2   ,  2   ], 
+"moveType": ["VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL", "VERTICAL"]}

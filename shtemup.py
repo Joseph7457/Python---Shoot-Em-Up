@@ -42,7 +42,7 @@ window.fill(BLACK)
 # player 1 parameters
 PLAYER1_SHIP_SIZE  = [123, 194] 
 PLAYER1_SHIP_SPEED = 10
-PLAYER1_SHIP_OFFSET = 100
+PLAYER1_SHIP_OFFSET = 200
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 INVULNERABILITY_DURATION = 500 # in ms
@@ -87,21 +87,35 @@ ANIMATIONS_TO_LOAD = {
     'V8'              : (9      , 'png', [120, 112]               ),
     'V9'              : (27     , 'png', [256, 256]               ),  
     'V10'             : (17     , 'png', [128, 112]               ),
-    'V11'             : (1      , 'png', [128, 128]               ),
+    'V11'             : (1      , 'png', [256, 128]               ),
+    'V12'             : (6      , 'png', [60 , 60 ]               ),
+    'V13'             : (18     , 'png', [96 , 64 ]               ),
+    'V14'             : (15     , 'png', [46 , 58 ]               ),
+    'V15'             : (7      , 'png', [64 , 64 ]               ),
+    'V16'             : (8      , 'png', [64 , 64 ]               ),
+    'V17'             : (20     , 'png', [64 , 64 ]               ),
+    'P1'              : (5      , 'png', [46, 48]                 ),
 }
 IMAGES_TO_LOAD = {
 # format:
 #   'name'            : (ext   , [sizeX, sizeY]                   ),
-    'missing_texture' : ('jpeg', [400, 400]                       ),
+    'missing_texture' : ('jpeg', [120, 80]                       ),
     'backGround_1'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
     'backGround_2'    : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
     'BLACKfond1'      : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
     'BLACKfond2'      : ('png', [WINDOW_SIZE[X], 8*WINDOW_SIZE[Y]]  ),
+    't'       : ('jpg', [1920, 2160]  ),
+    't2'      : ('jpg', [1920, 2160]  ),
+    't3'      : ('jpg', [1920, 2160]  ),
+    't4'      : ('jpg', [1920, 2160]  ),
 }
+
+
 
 # Definition of every wave
 levels = [["vague1.json", "vague2.json", "vague3.json", "data.json"],["data.json"]]
-randomLevel = ["vague1.json", "vague2.json", "vague3.json","data.json","data.json","data.json","data.json","data.json"]
+randomLevel = ["V11_0.json","V12_0.json", "V13_0.json", "V14_0.json", "V15_0.json", "V15_1.json", "V16_0.json", "V17_0.json"]
+#randomLevel = ["V17_0.json"] # pour tester vague individuelle
 level = []
 # Menu buttons
 buttons = []
@@ -145,6 +159,7 @@ ImageBank = {
 
     # fixed images location follows this format : sprite/Images/imageName.ext
 def addImageToBank(imageName, ext, imageScale = [50, 50]):
+    print(IMAGES_PATH + imageName + '.' + ext)
     image = pygame.image.load(IMAGES_PATH + imageName + '.' + ext).convert_alpha(window)
     ImageBank['fixed'][imageName] = pygame.transform.scale(image, (imageScale[X], imageScale[Y]))
 
@@ -221,12 +236,12 @@ def displayButton():
         window.blit(button['image'], button['position'])
 
 def checkButtonsCollisions(position):
-    global levelIndex
+    global levelIndex, playing
     for button in buttons:
         levelIndex = button['levelIndex']
         if button['rect'].collidepoint(position) and  levelIndex != 2:
             loadLevel(button['levelIndex'])
-            
+    playing = True
     return False
 
 def loadLevel(lI):
@@ -234,8 +249,8 @@ def loadLevel(lI):
     levelIndex = lI
     level.clear() 
     level = levels[levelIndex].copy()
-    spawnController = 0
-    print(level)
+    spawnController = createSpawnController()
+    initializeSpawners(level)
     control(level)
     playing = True
 
@@ -509,7 +524,7 @@ def moveEnemy(enemy, time):
         while(t>1000):
             t -= 1000
         d = reMap(t, 0,1000, 0, math.pi/2)
-        setDirection(getShipEntity(enemy['ship']), angleToCoords(d))
+        setDirection(getShipEntity(enemy['ship']), *angleToCoords(d))
     shipMove(enemy['ship'])
 
 def getEnemyShip(Enemy):
@@ -645,10 +660,7 @@ def collisionPlayerProjectile(player, projectiles):
 
 
 #--- Control ---#
-spawner = []
-spawnController = 0
-oldTime = 0
-deltaTime = 0
+
 
 def createSpawnController():
     return{
@@ -658,26 +670,31 @@ def createSpawnController():
         'timeElapsed': 0
     } 
 
-
+spawner = []
+spawnController = createSpawnController()
+oldTime = 0
+deltaTime = 0
 
 def initializeSpawners(nomFichier):
     global spawnController
 
-    if (spawnController == 0):
-        spawnController = createSpawnController()           # Création du controller
 
-        for w in range(len(nomFichier)):                    # Ajouter toutes les vagues du niveau
-
-            with open(nomFichier[w], "r") as read_file:        # Importation des données 
-                vague = json.load(read_file)
-            spawnController['spawner'].append(vague)
+    for w in range(len(nomFichier)):                    # Ajouter toutes les vagues du niveau
+        print('w')
+        print(w)
+        print(nomFichier[w])
+        with open(nomFichier[w], "r") as read_file:        # Importation des données 
+            print("ok0")
+            vague = json.load(read_file)
+        print("spawncontroller")
+        print(spawnController)
+        spawnController['spawner'].append(vague)
  
 
 def control(level):
     global spawnController, oldTime, deltaTime
 
     time = current_time
-    initializeSpawners(level)
     if (len (spawnController['spawner']) > 0):
     
         if (spawnController['timeElapsed'] > spawnController['spawner'][0]['timer'][spawnController['spawnIndex']] ): # ok
@@ -685,7 +702,7 @@ def control(level):
             wi = spawnController['waveIndex']; i = spawnController['spawnIndex']                                      # i et wi pour confort de lecture
 
 
-            scale = spawnController['spawner'][wi]['scale'][i]*0.75                                                 #ok
+            scale = spawnController['spawner'][wi]['scale'][i]                                                        #ok
 
             w = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_width()*scale)            #ok
             h = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_height()*scale)
@@ -710,7 +727,7 @@ def control(level):
             
                                     
             addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN)
-            startShipShooting(getEnemyShip(newEnemy))
+            #startShipShooting(getEnemyShip(newEnemy))
 
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
             #print(newEnemy)
@@ -729,12 +746,15 @@ def control(level):
     oldTime   = time
     spawnController['timeElapsed'] +=  deltaTime
 
-    
+
+PLAYER1_SHIP_SIZE[X] = 92
+PLAYER1_SHIP_SIZE[Y] = 96
+
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE[X], PLAYER1_SHIP_SIZE[Y], 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED), False))
 addWeaponToShip(getPlayerShip(Player1), PROJECTILE_BLUEPRINTS['blasterShot'], [PLAYER1_SHIP_SIZE[X]//2, 0], 'PlayerTeam', PLAYER1_WEAPON_COOLDOWN)
-addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'skinA', 'skinA', 0.4)
+addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'P1', 'P1', 0.4)
 
 leftInput = 0
 rightInput = 0
@@ -791,8 +811,40 @@ def inputManager(events):
 
 #--- BACKGROUND ---#
 # Background
+
 BGx = 0
-BGy = [-7*WINDOW_SIZE[1], -15*WINDOW_SIZE[1]]
+
+# stockage des fond d'écrans
+
+lvl_1_BG = []
+lvl_1_BG.append(getFixedImage('BLACKfond1'))
+lvl_1_BG.append(getFixedImage('BLACKfond2'))
+
+lvl_2_BG = []
+lvl_2_BG.append(getFixedImage('t'))
+lvl_2_BG.append(getFixedImage('t2'))
+
+lvl_3_BG = []
+lvl_3_BG.append(getFixedImage('t3'))
+lvl_3_BG.append(getFixedImage('t4'))
+
+
+allLvl_BG = []
+allLvl_BG.append(lvl_1_BG)
+allLvl_BG.append(lvl_2_BG)
+allLvl_BG.append(lvl_3_BG)
+
+lvlPlayed_BG = allLvl_BG[0]
+
+BGy = 0
+BGyBis = 0
+
+
+def initializeBG():
+    global BGy, BGyBis
+    BGyBis = lvlPlayed_BG[0].get_height()
+    BGy = [0, -BGyBis]
+    
 
 def BG():
     moveBG()
@@ -800,9 +852,8 @@ def BG():
     displayBG()
 
 def displayBG():
-    window.blit(getFixedImage('BLACKfond2'), (BGx, BGy[0]))
-    window.blit(getFixedImage('BLACKfond1'), (BGx, BGy[1]))
-    
+    window.blit(lvlPlayed_BG[0], (BGx, BGy[0]))
+    window.blit(lvlPlayed_BG[1], (BGx, BGy[1]))
 
 def moveBG():
     global BGy
@@ -810,13 +861,13 @@ def moveBG():
     BGy[1] += BACKGROUND_SPEED
 
 def reinitialiseBG():
-    if(BGy[0]>WINDOW_SIZE[1]):
-        BGy[0] = -15*WINDOW_SIZE[1]
-    if(BGy[1]>WINDOW_SIZE[1]):
-        BGy[1] = -15*WINDOW_SIZE[1]
+    if(BGy[0]>lvlPlayed_BG[0].get_height()):
+        BGy[0] = -BGyBis
+    if(BGy[1]>lvlPlayed_BG[0].get_height()):
+        BGy[1] = -BGyBis
 
 #--- END BACKGROUND ---#
-
+initializeBG()
 
 # Score
 score = 0
@@ -841,7 +892,7 @@ def displayLives():
 # used to restart everything when going back to the menu from playing.
 def restart():
     global spawnController, score
-    spawnController = 0    
+    spawnController = createSpawnController()  
     initializeSpawners(level)
     setPosition(getShipEntity(getPlayerShip(Player1)), PLAYER1_SHIP_START_POS)
 
@@ -851,6 +902,29 @@ def restart():
     resetPlayerInput(Player1)
     score = 0
     Player1['lives'] = LIVES_AT_START
+
+
+def loadRandomLevel():
+        global level
+        level.clear()
+        while(len(level) < 2):
+            taille = len(randomLevel)
+            randomIndex = random.randint(0,taille-1)
+            level.append(randomLevel[randomIndex])
+            #print(level)
+
+def killEnemiesOutOfBound():
+    malus = 0
+    for e in range(len(Enemies)):
+        #print("ennemi")
+        #print(Enemies[e])
+        if (Enemies[e-malus]['ship']['entity']['position'][1] > 1800):
+            Enemies.pop(e-malus)
+            malus += 1
+
+            print("l'ennemi est mort d'être parti trop loin monseigneur, quel idiot!")
+    
+
 
 # ----- End function definition
 
@@ -884,16 +958,13 @@ while not finished:
     window.fill(BLACK)
     displayMenu()
     displayButton()
+    if (levelIndex == 2 ):
+        loadRandomLevel()
     pygame.display.flip()
 
-    if (levelIndex == 2 ):
-            
-        while(len(level) < 5):
-            randomIndex = random.randint(0,5)
-            level.append(randomLevel[randomIndex])
-            playing = True
-            print(level)
-    
+
+
+
     while playing:
 
         current_time = pygame.time.get_ticks()
@@ -909,10 +980,12 @@ while not finished:
         # actions
         if (levelIndex == 2 ):
             
-            while(len(level) < 5):
-                randomIndex = randInt(random.randint(0,5))
-                level.append(randomLevel[randomIndex])
-                print(level)
+           
+            if (spawnController != 0 and len(spawnController['spawner']) == 0):
+                loadRandomLevel()
+                spawnController = createSpawnController()
+                initializeSpawners(level)
+               
 
         control(level)
         
@@ -938,14 +1011,16 @@ while not finished:
             updateInvulnerability(Player1, current_time)
         
         # display
-        displayEnemies(Enemies, current_time)
-        displayShip(getPlayerShip(Player1), current_time)
         displayProjectiles(Projectiles['EnemyTeam'], current_time)
         displayProjectiles(Projectiles['PlayerTeam'], current_time)
         displayProjectiles(Projectiles['toDestroy'], current_time)
+        displayEnemies(Enemies, current_time)
+        displayShip(getPlayerShip(Player1), current_time)
+
         updateProjectilesToDestroy()
         displayScore()
         displayLives()
+        killEnemiesOutOfBound()
         pygame.display.flip()
 
         temps.tick(60)
