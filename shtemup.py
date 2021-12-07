@@ -12,7 +12,7 @@ from pygame import color
 
 pygame.init()
 current_time = pygame.time.get_ticks()
-pygame.mixer.init()
+mixer.init()
 
 
 
@@ -53,10 +53,10 @@ INVULNERABILITY_DURATION = 500 # in ms
 LIVES_AT_START = 3
 
 #Projectiles
+    # declare your projectiles here first then create a weapon based on it
 PROJECTILE_BLUEPRINTS = {
    #'projectileName' : (size    , 'Animation'    , 'AnimationOnHit'    , onHitSize, speed, movementType, projectileDamage),
     'blasterShot'    : ([15, 15], 'enemy1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
-    'blueBlasterShot'    : ([15, 15], 'player1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
 }
 
 Projectiles = {
@@ -66,7 +66,7 @@ Projectiles = {
 }
 
 #Ennemies
-ENEMY_WEAPON_COOLDOWN = 500
+ENEMY_WEAPON_COOLDOWN = 1000
 ENEMY_PROJECTILE_SPEED = 20
 
 # Background
@@ -404,7 +404,7 @@ def destroyProjOutBound(projectiles):
 
 
 #--- WEAPON ---#
-def createWeapon(projectileBP, offset, ownerTeam, cooldown, maxAmmo):
+def createWeapon(projectileBP, offset, ownerTeam, cooldown):
     return {
         'projectileSize' : projectileBP[0],
         'projectileAnimation' : projectileBP[1],
@@ -417,12 +417,6 @@ def createWeapon(projectileBP, offset, ownerTeam, cooldown, maxAmmo):
         'ownerTeam' : ownerTeam,
         'cooldown' : cooldown,
         'lastShot' : 0,
-        'maxAmmo' : maxAmmo,
-        'currentAmmo' : maxAmmo,
-        'reloadSpeed' : 1000,
-        'isReloading' : False,
-        'lastReload' : 0,
-        
     }
 
 def setWeaponDamage(weapon, damage):
@@ -434,48 +428,19 @@ def setWeaponProjSpeed(weapon, speed):
 def setWeaponCooldown(weapon, cooldown):
     weapon['cooldown'] = cooldown
 
-def getWeaponCurrentAmmo(Weapon, currTime):
-    if isWeaponReloading(Weapon, currTime):
-        return 0
-
-    return Weapon['currentAmmo']
-
-def getWeaponMaxAmmo(Weapon):
-    return Weapon['maxAmmo']
-
-def isWeaponReloading(Weapon, currTime):
-    if Weapon['isReloading']:
-        if Weapon['lastReload'] + Weapon['reloadSpeed'] < currTime:
-            Weapon['isReloading'] = False
-            Weapon['currentAmmo'] = Weapon['maxAmmo']
-            return False
-        return True
-    return False
-
-def weaponReload(Weapon, currTime):
-    if not Weapon['isReloading']:
-        Weapon['lastReload'] = currTime
-        Weapon['isReloading'] = True
-
 def weaponShoot(weapon, position, currTime, direction = None):
-    if(currTime - weapon['lastShot'] >= weapon['cooldown']) and (not isWeaponReloading(weapon, currTime)):
-        if weapon['currentAmmo']:
-            if(not direction):
-                if weapon['ownerTeam'] == 'PlayerTeam':
-                    direction = [0, -1]
-                else:
-                    direction = [0, 1]
-            addProjectile(weapon['ownerTeam'], createProjectile(weapon['projectileSize'], weapon['projectileAnimation'],
-                                                                weapon['projectileOnHitAnimation'], weapon['projectileOnHitSize'],
-                                                                weapon['projectileSpeed'], weapon['projectileMoveType'], 
-                                                                weapon['projectileDamage'], direction, 
-                                                                [position[X] + weapon['offset'][X]-weapon['projectileSize'][X]//2, position[Y] + weapon['offset'][Y]-weapon['projectileSize'][Y]//2]))
-            weapon['lastShot'] = currTime
-            if weapon['maxAmmo']:
-                weapon['currentAmmo'] -= 1
-        else:
-            weaponReload(weapon, currTime)
-
+    if(currTime - weapon['lastShot'] >= weapon['cooldown']):
+        if(not direction):
+            if weapon['ownerTeam'] == 'PlayerTeam':
+                direction = [0, -1]
+            else:
+                direction = [0, 1]
+        addProjectile(weapon['ownerTeam'], createProjectile(weapon['projectileSize'], weapon['projectileAnimation'],
+                                                            weapon['projectileOnHitAnimation'], weapon['projectileOnHitSize'],
+                                                            weapon['projectileSpeed'], weapon['projectileMoveType'], 
+                                                            weapon['projectileDamage'], direction, 
+                                                            [position[X] + weapon['offset'][X]-weapon['projectileSize'][X]//2, position[Y] + weapon['offset'][Y]-weapon['projectileSize'][Y]//2]))
+        weapon['lastShot'] = currTime
 
 #--- END WEAPON ---#
 
@@ -508,11 +473,8 @@ def startShipShooting(Ship):
     Ship['isShooting'] = True
 
     # Methods
-def addWeaponToShip(Ship, projectileBP, weaponOffset, ownerTeam, cooldown, maxAmmo):
-    Ship['weapons'].append(createWeapon(projectileBP, weaponOffset, ownerTeam, cooldown, maxAmmo))
-
-def getShipCurrentWeapon(Ship):
-    return Ship['weapons'][Ship['weaponInUse']]
+def addWeaponToShip(Ship, projectileBP, weaponOffset, ownerTeam, cooldown):
+    Ship['weapons'].append(createWeapon(projectileBP, weaponOffset, ownerTeam, cooldown))
 
 def displayShip(Ship, time):
     displayEntity(getShipEntity(Ship), time)
@@ -773,7 +735,7 @@ def control(level):
 
             
                                     
-            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blueBlasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN, 0)
+            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN)
             startShipShooting(getEnemyShip(newEnemy))
 
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
@@ -800,7 +762,7 @@ PLAYER1_SHIP_SIZE[Y] = 96
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE[X], PLAYER1_SHIP_SIZE[Y], 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
                                                PLAYER1_SHIP_SPEED), False))
-addWeaponToShip(getPlayerShip(Player1), PROJECTILE_BLUEPRINTS['blasterShot'], [PLAYER1_SHIP_SIZE[X]//2, 0], 'PlayerTeam', PLAYER1_WEAPON_COOLDOWN, 12)
+addWeaponToShip(getPlayerShip(Player1), PROJECTILE_BLUEPRINTS['blasterShot'], [PLAYER1_SHIP_SIZE[X]//2, 0], 'PlayerTeam', PLAYER1_WEAPON_COOLDOWN)
 addEntityAnimation(getShipEntity(getPlayerShip(Player1)), 'P1', 'P1', 0.4)
 
 leftInput = 0
@@ -912,8 +874,8 @@ initializeBG()
 
 # Score
 score = 0
-def displayScore():
-    displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
+def displayScore(position):
+    displayMessage(scoreFont, "Score: " + str(score), WHITE, position)
 
 def displayMessage(font, string, color, position):
     message = font.render(string, True, color)
@@ -930,12 +892,6 @@ def displayMenu():
 def displayLives():
     displayMessage(scoreFont, "Lives: " + str(getPlayerLives(Player1)), WHITE, (0,WINDOW_SIZE[Y]-100))
 
-def displayAmmo(isReloading, currentAmmo, maxAmmo):
-    if isReloading:
-        displayMessage(scoreFont, "RELOADING", WHITE, (0,WINDOW_SIZE[Y]//2))
-    else:
-        displayMessage(scoreFont, "Ammo: " + str(currentAmmo) + '/' + str(maxAmmo), WHITE, (0,WINDOW_SIZE[Y]//2))
-
 # used to restart everything when going back to the menu from playing.
 def restart():
     global spawnController, score
@@ -949,6 +905,7 @@ def restart():
     resetPlayerInput(Player1)
     score = 0
     Player1['lives'] = LIVES_AT_START
+    stopShipShooting(getPlayerShip(Player1))
 
 
 def loadRandomLevel():
@@ -1014,6 +971,7 @@ buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (600, 200)
 
 finished   = False
 playing = False
+gameover = False
 
 while not finished:
 
@@ -1083,7 +1041,8 @@ while not finished:
                 onPlayerHit(Player1, current_time)
                 if getPlayerLives(Player1) <= 0:
                     playing = False
-                    restart()
+                    gameover = True
+                    #restart()
         else:
             updateInvulnerability(Player1, current_time)
         
@@ -1095,10 +1054,28 @@ while not finished:
         displayShip(getPlayerShip(Player1), current_time)
 
         updateProjectilesToDestroy()
-        displayScore()
+        displayScore((0, 0))
         displayLives()
-        displayAmmo(isWeaponReloading(getShipCurrentWeapon(getPlayerShip(Player1)), current_time), getWeaponCurrentAmmo(getShipCurrentWeapon(getPlayerShip(Player1)), current_time), getWeaponMaxAmmo(getShipCurrentWeapon(getPlayerShip(Player1))))
         killEnemiesOutOfBound()
+        pygame.display.flip()
+
+        temps.tick(60)
+
+    while gameover:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                gameover = False
+                finished = True
+
+            if event.type == pygame.KEYDOWN :
+                if event.key == pygame.K_ESCAPE:
+                    gameover = False
+                    restart()
+
+        BG()
+        displayMessage(scoreFont, "GAME OVER", WHITE, (WINDOW_SIZE[0]/2 - 200, WINDOW_SIZE[1]/2 - 200))
+        displayScore((WINDOW_SIZE[0]/2 - 200, WINDOW_SIZE[1]/2))
         pygame.display.flip()
 
         temps.tick(60)
