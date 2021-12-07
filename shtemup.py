@@ -66,7 +66,7 @@ Projectiles = {
 }
 
 #Ennemies
-ENEMY_WEAPON_COOLDOWN = 500
+ENEMY_WEAPON_COOLDOWN = 100
 ENEMY_PROJECTILE_SPEED = 20
 
 # Background
@@ -250,7 +250,7 @@ def checkButtonsCollisions(position):
                 levelIndex = button['levelIndex']
             else:
                 levelIndex = button['levelIndex']
-    playing = True
+            return True
     return False
 
 def loadLevel(lI):
@@ -459,7 +459,7 @@ def weaponReload(Weapon, currTime):
 
 def weaponShoot(weapon, position, currTime, direction = None):
     if(currTime - weapon['lastShot'] >= weapon['cooldown']) and (not isWeaponReloading(weapon, currTime)):
-        if weapon['currentAmmo']:
+        if weapon['currentAmmo'] or not weapon['maxAmmo']:
             if(not direction):
                 if weapon['ownerTeam'] == 'PlayerTeam':
                     direction = [0, -1]
@@ -773,7 +773,7 @@ def control(level):
 
             
                                     
-            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blueBlasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN, 0)
+            addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blueBlasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN, 3)
             startShipShooting(getEnemyShip(newEnemy))
 
             addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
@@ -912,8 +912,8 @@ initializeBG()
 
 # Score
 score = 0
-def displayScore():
-    displayMessage(scoreFont, "Score: " + str(score), WHITE, (0,0))
+def displayScore(position):
+    displayMessage(scoreFont, "Score: " + str(score), WHITE, position)
 
 def displayMessage(font, string, color, position):
     message = font.render(string, True, color)
@@ -923,7 +923,6 @@ def displayMessage(font, string, color, position):
 
 def displayMenu():
     displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
-    displayMessage(menuFont, "Appuyer sur une touche pour commencer à jouer", WHITE, (100, WINDOW_SIZE[1]-100))
 
 # Lives
 
@@ -937,7 +936,7 @@ def displayAmmo(isReloading, currentAmmo, maxAmmo):
         displayMessage(scoreFont, "Ammo: " + str(currentAmmo) + '/' + str(maxAmmo), WHITE, (0,WINDOW_SIZE[Y]//2))
 
 # used to restart everything when going back to the menu from playing.
-def restart():
+def restart(currTime):
     global spawnController, score
     spawnController = createSpawnController()  
     initializeSpawners(level)
@@ -949,7 +948,8 @@ def restart():
     resetPlayerInput(Player1)
     score = 0
     Player1['lives'] = LIVES_AT_START
-
+    stopShipShooting(getPlayerShip(Player1))
+    weaponReload(getPlayerShip(Player1)['weapons'][getPlayerShip(Player1)['weaponInUse']], currTime)
 
 def loadRandomLevel():
         global level
@@ -1014,6 +1014,7 @@ buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (600, 200)
 
 finished   = False
 playing = False
+gameover = False
 
 while not finished:
 
@@ -1024,12 +1025,10 @@ while not finished:
         if event.type == pygame.KEYDOWN :
             if event.key == pygame.K_ESCAPE:
                 finished = True
-            else:
-                playing = True
-                resetPlayerInput(Player1)
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            checkButtonsCollisions(event.pos)
+            if checkButtonsCollisions(event.pos):
+                playing = True
 
     window.fill(BLACK)
     music()
@@ -1083,7 +1082,7 @@ while not finished:
                 onPlayerHit(Player1, current_time)
                 if getPlayerLives(Player1) <= 0:
                     playing = False
-                    restart()
+                    gameover = True
         else:
             updateInvulnerability(Player1, current_time)
         
@@ -1095,7 +1094,7 @@ while not finished:
         displayShip(getPlayerShip(Player1), current_time)
 
         updateProjectilesToDestroy()
-        displayScore()
+        displayScore((0,0))
         displayLives()
         displayAmmo(isWeaponReloading(getShipCurrentWeapon(getPlayerShip(Player1)), current_time), getWeaponCurrentAmmo(getShipCurrentWeapon(getPlayerShip(Player1)), current_time), getWeaponMaxAmmo(getShipCurrentWeapon(getPlayerShip(Player1))))
         killEnemiesOutOfBound()
@@ -1103,8 +1102,30 @@ while not finished:
 
         temps.tick(60)
 
+    while gameover:
+
+        current_time = pygame.time.get_ticks()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                gameover = False
+                finished = True
+
+            if event.type == pygame.KEYDOWN :
+                if event.key == pygame.K_ESCAPE:
+                    gameover = False
+                    restart(current_time)
+
+        BG()
+        displayMessage(scoreFont, "GAME OVER", WHITE, (WINDOW_SIZE[0]/2 - 200, WINDOW_SIZE[1]/2 - 200))
+        displayScore((WINDOW_SIZE[0]/2 - 200, WINDOW_SIZE[1]/2))
+        pygame.display.flip()
+
+        temps.tick(60)
+
 pygame.display.quit()
 pygame.quit()
+
 
 
 
