@@ -833,7 +833,7 @@ def inputManager(events):
 
             if event.key == pygame.K_ESCAPE:
                 playing = False
-                restart()
+                restart(current_time)
         
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_q or event.key == pygame.K_LEFT:
