@@ -1,0 +1,7 @@
+{"timer": [3500, 0, 1500, 0, 1500, 0 ,1500, 0,1500,0,1500 ,0  ], 
+"x": 	  [0 , 1920 , 0 , 1920 , 0 , 1920  ,0 , 1920 , 0, 1920, 0 ,1920   ], 
+"y":      [500   ,    650,    500,   650 , 500   , 650    , 500  , 650   , 500  , 650  , 500   , 650    ], 
+"speed":  [3   ,    -3,    3,    -3,   3 , -3    , 3  , -3    , 3 , -3  , 3   , -3    ], 
+"skin":   ["V4", "V4", "V4", "V4", "V4", "V4" ,"V4","V4","V4" ,"V4","V4", "V4"], 
+"scale":  [0.80   ,    0.80,    0.80,   0.80 , 0.80   , 0.80    , 0.80  ,  0.80 , 0.80   ,  0.80 , 0.80   ,  0.80   ], 
+"moveType": ["HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL"]}

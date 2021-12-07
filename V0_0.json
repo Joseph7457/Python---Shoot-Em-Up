@@ -1,0 +1,7 @@
+{"timer": [500, 500, 500, 500, 500, 500 ,500, 500,500,500,500 ,0  ], 
+"x": 	  [0 , 1920 , 0 , 1920 , 0 , 1920  ,0 , 1920 , 0, 1920, 760 ,1160   ], 
+"y":      [400   ,    400,    300,   300 , 200   , 200    , 300 , 300   , 400  , 400  , 0   , 0    ], 
+"speed":  [6   ,    -6,    6,    -6,   6 , -6    , 6  , -6    , 6 , -6  , 6   , 6    ], 
+"skin":   ["V0", "V0", "V0", "V0", "V0", "V0" ,"V0","V0","V0" ,"V0","V0", "V0"], 
+"scale":  [0.70   ,    0.70,    0.70,   0.70 , 0.70   , 0.70    , 0.70  ,  0.70 , 0.70   ,  0.70 , 0.70   ,  0.70   ], 
+"moveType": ["HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "HORIZONTAL", "VERTICAL", "VERTICAL"]}

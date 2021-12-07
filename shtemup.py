@@ -7,10 +7,13 @@ import math
 import json
 import random
 
+from pygame import mixer
 from pygame import color
 
 pygame.init()
 current_time = pygame.time.get_ticks()
+mixer.init()
+
 
 
 # --- To make code more readable
@@ -36,6 +39,7 @@ WHITE = (  255, 255, 255)
 MIDNIGHT_BLUE = (25, 25, 120)
 
 # INIT 
+#window = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
 window = pygame.display.set_mode(WINDOW_SIZE)
 window.fill(BLACK)
 
@@ -46,7 +50,7 @@ PLAYER1_SHIP_OFFSET = 200
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 INVULNERABILITY_DURATION = 500 # in ms
-LIVES_AT_START = 30
+LIVES_AT_START = 3
 
 #Projectiles
     # declare your projectiles here first then create a weapon based on it
@@ -114,8 +118,8 @@ IMAGES_TO_LOAD = {
 
 # Definition of every wave
 levels = [["vague1.json", "vague2.json", "vague3.json", "data.json"],["data.json"]]
-randomLevel = ["V11_0.json","V12_0.json", "V13_0.json", "V14_0.json", "V15_0.json", "V15_1.json", "V16_0.json", "V17_0.json"]
-#randomLevel = ["V17_0.json"] # pour tester vague individuelle
+randomLevel = ["V0_0.json","V1_0.json","V2_0.json","V2_1.json","V3_0.json","V4_0.json","V5_0.json","V6_0.json","V7_0.json","V8_0.json","V8_1.json","V9_0.json", "V10_0.json", "V11_0.json","V12_0.json", "V13_0.json", "V14_0.json", "V15_0.json", "V15_1.json", "V16_0.json", "V17_0.json"]
+#randomLevel = ["V5_0.json"] # pour tester vague individuelle
 level = []
 # Menu buttons
 buttons = []
@@ -235,12 +239,17 @@ def displayButton():
     for button in buttons:
         window.blit(button['image'], button['position'])
 
+RANDOMLVL = 2
+
 def checkButtonsCollisions(position):
     global levelIndex, playing
     for button in buttons:
-        levelIndex = button['levelIndex']
-        if button['rect'].collidepoint(position) and  levelIndex != 2:
-            loadLevel(button['levelIndex'])
+        if button['rect'].collidepoint(position):
+            if (button['levelIndex'] != RANDOMLVL):
+                loadLevel(button['levelIndex'])
+                levelIndex = button['levelIndex']
+            else:
+                levelIndex = button['levelIndex']
     playing = True
     return False
 
@@ -782,13 +791,7 @@ def inputManager(events):
                 downInput = 1
             if event.key == pygame.K_SPACE :
                 inputPlayerShoot(Player1)
-            if event.key == pygame.K_LCTRL:
-                if (projectiles_axe == 1 ):
-                    projectiles_axe  =-1
-                    setShipShootingDirection(getPlayerShip(Player1), 0, -1)
-                else:
-                    projectiles_axe =1
-                    setShipShootingDirection(getPlayerShip(Player1), 0, 1)
+  
 
             if event.key == pygame.K_ESCAPE:
                 playing = False
@@ -918,12 +921,41 @@ def killEnemiesOutOfBound():
     for e in range(len(Enemies)):
         #print("ennemi")
         #print(Enemies[e])
-        if (Enemies[e-malus]['ship']['entity']['position'][1] > 1800):
+        if (Enemies[e-malus]['ship']['entity']['position'][1] > 1800 or Enemies[e-malus]['ship']['entity']['position'][0] > 2000 or Enemies[e-malus]['ship']['entity']['position'][0] < -200):
             Enemies.pop(e-malus)
             malus += 1
 
             print("l'ennemi est mort d'être parti trop loin monseigneur, quel idiot!")
     
+
+# MUSIC
+
+musicAtTheMoment = "Famineur.ogg"
+nextMusic        = "PamPadaDam.ogg"
+
+
+def music():
+    global musicAtTheMoment, nextMusic, levelIndex
+
+    if(musicAtTheMoment is not nextMusic):
+        musicAtTheMoment = nextMusic
+        mixer.music.stop()
+        mixer.music.unload()
+        mixer.music.load(MUSIC_PATH+musicAtTheMoment)
+        mixer.music.set_volume(0.8)
+        mixer.music.play()
+        
+
+    if(playing):
+        if levelIndex == 0:
+            nextMusic = "ProjetBartok.ogg"
+        elif levelIndex == 1:
+            nextMusic = "Famineur.ogg"
+        elif levelIndex == 2:
+            nextMusic = "PamPadaDam.ogg"
+    else:
+        nextMusic = "Famineur.ogg"
+
 
 
 # ----- End function definition
@@ -956,6 +988,7 @@ while not finished:
             checkButtonsCollisions(event.pos)
 
     window.fill(BLACK)
+    music()
     displayMenu()
     displayButton()
     if (levelIndex == 2 ):
@@ -966,7 +999,7 @@ while not finished:
 
 
     while playing:
-
+        music()
         current_time = pygame.time.get_ticks()
 
         inputManager(pygame.event.get())
