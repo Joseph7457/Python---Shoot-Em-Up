@@ -20,12 +20,14 @@ pygame.mixer.init()
 X = 0; Y = 1
 
 # window size
-WINDOW_SIZE = [1920, 1080]
+WINDOW_SIZE = [800, 600]
 HEIGHT = WINDOW_SIZE[1]
 WIDTH  = WINDOW_SIZE[0]
 W = WIDTH
 H = HEIGHT
 REFRESH_RATE = 60
+ratioVertical   = WINDOW_SIZE[0]/1920
+ratioHorizontal = WINDOW_SIZE[0]/1920
 
 #paths
 ANIMATION_PATH = 'sprites/animations/'
@@ -45,8 +47,10 @@ window.fill(BLACK)
 
 # player 1 parameters
 PLAYER1_SHIP_SIZE  = [123, 194] 
+PLAYER1_SHIP_SIZE[X] = int(92*ratioHorizontal)
+PLAYER1_SHIP_SIZE[Y] = int(96*ratioVertical)
+PLAYER1_SHIP_OFFSET = PLAYER1_SHIP_SIZE[Y]
 PLAYER1_SHIP_SPEED = 10
-PLAYER1_SHIP_OFFSET = 200
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
 PLAYER1_WEAPON_COOLDOWN = 200 # in ms
 INVULNERABILITY_DURATION = 500 # in ms
@@ -55,8 +59,8 @@ LIVES_AT_START = 3
 #Projectiles
 PROJECTILE_BLUEPRINTS = {
    #'projectileName' : (size    , 'Animation'    , 'AnimationOnHit'    , onHitSize, speed, movementType, projectileDamage),
-    'blasterShot'    : ([15, 15], 'enemy1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
-    'blueBlasterShot'    : ([15, 15], 'player1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
+    'blasterShot'    : ([10, 10], 'enemy1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
+    'blueBlasterShot'    : ([11, 11], 'player1_base'  , 'ClusterExplosion'  , [80, 80] , 10   , None        , 1               ),
 }
 
 Projectiles = {
@@ -67,7 +71,7 @@ Projectiles = {
 
 #Ennemies
 ENEMY_WEAPON_COOLDOWN = 100
-ENEMY_PROJECTILE_SPEED = 20
+ENEMY_PROJECTILE_SPEED = 10*ratioHorizontal
 
 # Background
 BACKGROUND_SPEED = 7
@@ -459,7 +463,7 @@ def weaponReload(Weapon, currTime):
 
 def weaponShoot(weapon, position, currTime, direction = None):
     if(currTime - weapon['lastShot'] >= weapon['cooldown']) and (not isWeaponReloading(weapon, currTime)):
-        if weapon['currentAmmo'] or not weapon['maxAmmo']:
+        if weapon['currentAmmo'] and weapon['maxAmmo']>0:
             if(not direction):
                 if weapon['ownerTeam'] == 'PlayerTeam':
                     direction = [0, -1]
@@ -751,8 +755,8 @@ def control(level):
 
             scale = spawnController['spawner'][wi]['scale'][i]                                                        #ok
 
-            w = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_width()*scale)            #ok
-            h = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_height()*scale)
+            w = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_width()*scale*ratioHorizontal)            #ok
+            h = int(ImageBank['animated'][spawnController['spawner'][wi]['skin'][i]][0].get_height()*scale*ratioVertical)
             #print ( "la largeur est de " + str(w))  
             #print ( "la hauteur est de " + str(h))
 
@@ -763,20 +767,37 @@ def control(level):
             newEnemy['moveType'] = moveType
 
             # Vitesse
-            speed = spawnController['spawner'][wi]['speed'][i]
+            speed = spawnController['spawner'][wi]['speed'][i]*ratioHorizontal
             newEnemy['ship']['entity']['speed'] = speed
 
             #Position
-            position = [spawnController['spawner'][wi]['x'][i] - w/2,    spawnController['spawner'][wi]['y'][i]- h]
+            position = [spawnController['spawner'][wi]['x'][i]*ratioHorizontal - w/2,    spawnController['spawner'][wi]['y'][i]*ratioVertical- h]
             newEnemy['ship']['entity']['position'] = position
             #print("la position est de " + str(position))
 
             
                                     
             addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blueBlasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN, 3)
-            startShipShooting(getEnemyShip(newEnemy))
+            print(newEnemy['ship']['weapons'])
+            newEnemy['ship']['weapons'][0]['maxAmmo'] = random.choice((3,1,2))
+            newEnemy['ship']['weapons'][0]['reloadSpeed'] = random.choice((1000,1500,2000,2500,3000))
 
-            addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', spawnController['spawner'][wi]['skin'][i], 1)      # choix du skin
+            if(moveType == 'VERTICAL'):
+                if(random.randint(0, 10)>7): 
+                      newEnemy['ship']['weapons'][0]['maxAmmo'] = 1
+                      startShipShooting(getEnemyShip(newEnemy))
+            else:
+                startShipShooting(getEnemyShip(newEnemy))
+
+            skin = spawnController['spawner'][wi]['skin'][i]
+
+            if(skin == 'V17'):
+                if (random.randint(0,10)> 7):
+                    newEnemy['ship']['weapons'][0]['maxAmmo'] = 1
+                else:
+                    newEnemy['ship']['weapons'][0]['maxAmmo'] = 0
+
+            addEntityAnimation(getShipEntity(getEnemyShip(newEnemy)), 'Skin_1', skin, 1)      # choix du skin
             #print(newEnemy)
             addEnemy(newEnemy)  
 
@@ -794,8 +815,7 @@ def control(level):
     spawnController['timeElapsed'] +=  deltaTime
 
 
-PLAYER1_SHIP_SIZE[X] = 92
-PLAYER1_SHIP_SIZE[Y] = 96
+
 
 Player1 = createPlayer(createShip(createEntity(PLAYER1_SHIP_SIZE[X], PLAYER1_SHIP_SIZE[Y], 
                                                PLAYER1_SHIP_START_POS[X], PLAYER1_SHIP_START_POS[Y], 
@@ -922,6 +942,7 @@ def displayMessage(font, string, color, position):
 # Menu
 
 def displayMenu():
+    BG()
     displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
 
 # Lives
@@ -981,7 +1002,7 @@ nextMusic        = "PamPadaDam.ogg"
 def music():
     global musicAtTheMoment, nextMusic, levelIndex
 
-    if(musicAtTheMoment is not nextMusic):
+    if(musicAtTheMoment != nextMusic):
         musicAtTheMoment = nextMusic
         mixer.music.stop()
         #mixer.music.unload()
@@ -1017,7 +1038,7 @@ playing = False
 gameover = False
 
 while not finished:
-
+    temps.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finished = True
