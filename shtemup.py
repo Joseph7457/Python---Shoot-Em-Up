@@ -116,12 +116,15 @@ IMAGES_TO_LOAD = {
     't2'      : ('jpg', [1920, 2160]  ),
     't3'      : ('jpg', [1920, 2160]  ),
     't4'      : ('jpg', [1920, 2160]  ),
+    'menu'    : ('png', [WINDOW_SIZE[X], WINDOW_SIZE[Y]]            ),
+    'lvl2'       : ('png', [150, 75]            ),
+    'endless'    : ('png', [150, 75]            ),
 }
 
 
 
 # Definition of every wave
-levels = [["vague1.json", "vague2.json", "vague3.json", "data.json"],["data.json"]]
+levels = [["vague1.json", "vague2.json", "vague3.json", "data.json"],["V1_0.json","V2_0.json","V2_1.json"]]
 randomLevel = ["V0_0.json","V1_0.json","V2_0.json","V2_1.json","V3_0.json","V4_0.json","V5_0.json","V6_0.json","V7_0.json","V8_0.json","V8_1.json","V9_0.json", "V10_0.json", "V11_0.json","V12_0.json", "V13_0.json", "V14_0.json", "V15_0.json", "V15_1.json", "V16_0.json", "V17_0.json"]
 #randomLevel = ["V5_0.json"] # pour tester vague individuelle
 level = []
@@ -233,7 +236,7 @@ def shouldAnimate(animation, currTime):
 
 def createButton(image, position, size, levelIndex):
     return {
-        'image': image,
+        'image': pygame.transform.scale(image, size),
         'position': position,
         'rect': pygame.Rect(position, size),
         'levelIndex': levelIndex
@@ -943,7 +946,9 @@ def displayMessage(font, string, color, position):
 
 def displayMenu():
     BG()
-    displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
+    fond = getFixedImage('menu')
+    window.blit(fond, [0,0])
+    ##displayMessage(scoreFont, "Shootem'up", WHITE, (WINDOW_SIZE[0]//3, WINDOW_SIZE[1]//3))
 
 # Lives
 
@@ -1030,8 +1035,9 @@ temps = pygame.time.Clock()
 scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
 menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
 
-buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (200, 200), (128, 128), 0)) 
-buttons.append(createButton(pygame.image.load(IMAGES_PATH + '1.png'), (600, 200), (128, 128), 2)) 
+
+buttons.append(createButton(pygame.image.load(IMAGES_PATH + 'lvl2.png'), (50, 450), (150, 100), 0)) 
+buttons.append(createButton(pygame.image.load(IMAGES_PATH + 'endless.png'), (350, 450), (150, 100), 2)) 
 
 finished   = False
 playing = False
