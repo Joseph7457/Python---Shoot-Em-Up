@@ -52,7 +52,7 @@ PLAYER1_SHIP_SIZE[Y] = int(96*ratioVertical)
 PLAYER1_SHIP_OFFSET = PLAYER1_SHIP_SIZE[Y]
 PLAYER1_SHIP_SPEED = 10
 PLAYER1_SHIP_START_POS = [WINDOW_SIZE[0]//2, WINDOW_SIZE[1]-PLAYER1_SHIP_OFFSET]
-PLAYER1_WEAPON_COOLDOWN = 200 # in ms
+PLAYER1_WEAPON_COOLDOWN = 75 # in ms
 INVULNERABILITY_DURATION = 500 # in ms
 LIVES_AT_START = 3
 
@@ -170,7 +170,7 @@ ImageBank = {
 
     # fixed images location follows this format : sprite/Images/imageName.ext
 def addImageToBank(imageName, ext, imageScale = [50, 50]):
-    print(IMAGES_PATH + imageName + '.' + ext)
+    #print(IMAGES_PATH + imageName + '.' + ext)
     image = pygame.image.load(IMAGES_PATH + imageName + '.' + ext).convert_alpha(window)
     ImageBank['fixed'][imageName] = pygame.transform.scale(image, (imageScale[X], imageScale[Y]))
 
@@ -734,14 +734,14 @@ def initializeSpawners(nomFichier):
 
 
     for w in range(len(nomFichier)):                    # Ajouter toutes les vagues du niveau
-        print('w')
-        print(w)
-        print(nomFichier[w])
+        #print('w')
+        #print(w)
+        #print(nomFichier[w])
         with open(nomFichier[w], "r") as read_file:        # Importation des données 
-            print("ok0")
+            #print("ok0")
             vague = json.load(read_file)
-        print("spawncontroller")
-        print(spawnController)
+        #print("spawncontroller")
+        #print(spawnController)
         spawnController['spawner'].append(vague)
  
 
@@ -781,7 +781,7 @@ def control(level):
             
                                     
             addWeaponToShip(getPlayerShip(newEnemy), PROJECTILE_BLUEPRINTS['blueBlasterShot'], [w//2, h] ,'EnemyTeam', ENEMY_WEAPON_COOLDOWN, 3)
-            print(newEnemy['ship']['weapons'])
+            #print(newEnemy['ship']['weapons'])
             newEnemy['ship']['weapons'][0]['maxAmmo'] = random.choice((3,1,2))
             newEnemy['ship']['weapons'][0]['reloadSpeed'] = random.choice((1000,1500,2000,2500,3000))
 
@@ -898,7 +898,7 @@ allLvl_BG.append(lvl_1_BG)
 allLvl_BG.append(lvl_2_BG)
 allLvl_BG.append(lvl_3_BG)
 
-lvlPlayed_BG = allLvl_BG[0]
+lvlPlayed_BG = allLvl_BG[1]
 
 BGy = 0
 BGyBis = 0
@@ -953,13 +953,13 @@ def displayMenu():
 # Lives
 
 def displayLives():
-    displayMessage(scoreFont, "Lives: " + str(getPlayerLives(Player1)), WHITE, (0,WINDOW_SIZE[Y]-100))
+    displayMessage(scoreFont, "Lives: " + str(getPlayerLives(Player1)), WHITE, (0,WINDOW_SIZE[Y]-3*WINDOW_SIZE[Y]//24))
 
 def displayAmmo(isReloading, currentAmmo, maxAmmo):
     if isReloading:
-        displayMessage(scoreFont, "RELOADING", WHITE, (0,WINDOW_SIZE[Y]//2))
+        displayMessage(scoreFont, "RELOADING", WHITE, (0,WINDOW_SIZE[Y]-WINDOW_SIZE[Y]//24))
     else:
-        displayMessage(scoreFont, "Ammo: " + str(currentAmmo) + '/' + str(maxAmmo), WHITE, (0,WINDOW_SIZE[Y]//2))
+        displayMessage(scoreFont, "Ammo: " + str(currentAmmo) + '/' + str(maxAmmo), WHITE, (0,WINDOW_SIZE[Y]-WINDOW_SIZE[Y]//24))
 
 # used to restart everything when going back to the menu from playing.
 def restart(currTime):
@@ -995,9 +995,20 @@ def killEnemiesOutOfBound():
             Enemies.pop(e-malus)
             malus += 1
 
-            print("l'ennemi est mort d'être parti trop loin monseigneur, quel idiot!")
+            #print("l'ennemi est mort d'être parti trop loin monseigneur, quel idiot!")
     
 
+def boundThePlayer():
+    global Player1
+    
+    if(Player1['ship']['entity']['position'][0]<0):
+        Player1['ship']['entity']['position'][0] = 0
+    if(Player1['ship']['entity']['position'][0]>WINDOW_SIZE[X] - PLAYER1_SHIP_SIZE[X]):
+        Player1['ship']['entity']['position'][0] = WINDOW_SIZE[X] - PLAYER1_SHIP_SIZE[X]
+    if(Player1['ship']['entity']['position'][1]>WINDOW_SIZE[Y] - PLAYER1_SHIP_SIZE[Y]):
+        Player1['ship']['entity']['position'][1] = WINDOW_SIZE[Y] - PLAYER1_SHIP_SIZE[Y]
+    if(Player1['ship']['entity']['position'][1]<0) :
+        Player1['ship']['entity']['position'][1] = 0
 # MUSIC
 
 musicAtTheMoment = "Famineur.ogg"
@@ -1032,8 +1043,9 @@ def music():
 
 temps = pygame.time.Clock()
     
-scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//12, True)
-menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//20, True)
+scoreFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//24, True)
+gameOverFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//6, True)
+menuFont = pygame.font.SysFont('monospace', WINDOW_SIZE[Y]//24, True)
 
 
 buttons.append(createButton(pygame.image.load(IMAGES_PATH + 'lvl2.png'), (50, 450), (150, 100), 0)) 
@@ -1100,6 +1112,7 @@ while not finished:
         shipShoot(getPlayerShip(Player1), current_time)
         enemiesShoot(current_time)
         movePlayer(Player1)
+        boundThePlayer()
 
         moveAllEnnemies(Enemies, current_time)
         collisionEnnemiesProjectile(Enemies, Projectiles['PlayerTeam'])
@@ -1144,8 +1157,8 @@ while not finished:
                     restart(current_time)
 
         BG()
-        displayMessage(scoreFont, "GAME OVER", WHITE, (WINDOW_SIZE[0]/2 - 200, WINDOW_SIZE[1]/2 - 200))
-        displayScore((WINDOW_SIZE[0]/2 - 200, WINDOW_SIZE[1]/2))
+        displayMessage(gameOverFont, "GAME OVER", WHITE, (WINDOW_SIZE[0]/2 - 300, WINDOW_SIZE[1]/2 - 150))
+        displayScore((WINDOW_SIZE[0]/2 - 100, WINDOW_SIZE[1]/2))
         pygame.display.flip()
 
         temps.tick(60)
