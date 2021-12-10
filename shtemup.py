@@ -898,7 +898,7 @@ allLvl_BG.append(lvl_1_BG)
 allLvl_BG.append(lvl_2_BG)
 allLvl_BG.append(lvl_3_BG)
 
-lvlPlayed_BG = allLvl_BG[1]
+lvlPlayed_BG = allLvl_BG[0]
 
 BGy = 0
 BGyBis = 0
